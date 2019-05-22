@@ -46,6 +46,7 @@ class DriverActivity : AppCompatActivity() {
         //    startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT)
         //}
         service = BluetoothGameService( this, handler )
+        service?.start()
     }
 
     /**
@@ -68,6 +69,7 @@ class DriverActivity : AppCompatActivity() {
             Toast.makeText(this, "You clicked $clickItemObj" + " UUID is " + BluetoothGameService.GameUUID, Toast.LENGTH_SHORT).show()
 
             val toConnect = pairedDevices?.filter{ device: BluetoothDevice -> device.address == "D4:CA:6E:7D:C5:ED" }?.elementAt(0 )
+            /*
             if( toConnect != null) {
                 try {
                     service?.connect(toConnect)
@@ -84,6 +86,7 @@ class DriverActivity : AppCompatActivity() {
                     Log.e(TAG, "Error during write in DriverActivity")
                 }
             }
+            */
         }
     }
 

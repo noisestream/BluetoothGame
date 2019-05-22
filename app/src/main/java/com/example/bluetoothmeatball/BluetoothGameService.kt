@@ -187,6 +187,7 @@ class BluetoothGameService(context: Context, h: Handler) {
 
         // TODO what is the difference between a secure and an insecure socket?
         init{
+            Log.e(TAG, "Constructing acceptThread")
             var tmp: BluetoothServerSocket? = null
 
             try{
@@ -202,6 +203,7 @@ class BluetoothGameService(context: Context, h: Handler) {
 
         // TODO needs override keyword?
         override fun run(){
+            Log.e(TAG, "Starting run() in accept thread")
             setName("Accept Thread")
             var localSocket: BluetoothSocket? = null
             while ( mState != STATE_CONNECTED ){
@@ -231,11 +233,11 @@ class BluetoothGameService(context: Context, h: Handler) {
                     }
                 }
             }
-            Log.i(TAG,"End of acceptThread")
+            Log.e(TAG,"End of acceptThread")
         }
 
         fun cancel(){
-            Log.d(TAG, "cancel socket")
+            Log.e(TAG, "cancel socket")
             try{
                 serverSocket?.close()
             }
@@ -309,7 +311,7 @@ class BluetoothGameService(context: Context, h: Handler) {
         var localOutStream: OutputStream? = null
 
         init{
-            Log.d(TAG, "Create ConnectedThread")
+            Log.e(TAG, "Create ConnectedThread")
             localSocket = socket
             var tmpIn: InputStream? = null
             var tmpOut: OutputStream? = null
@@ -327,7 +329,7 @@ class BluetoothGameService(context: Context, h: Handler) {
         }
 
         override fun run(){
-            Log.i(TAG, "beginning connectedthread")
+            Log.e(TAG, "beginning connectedthread")
 
             var buffer = ByteArray(1) // TODO here I differ from the sample code. The buffer is 1024 there, but I want to avoid buffering issues.
             var bytes = 0
