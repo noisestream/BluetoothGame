@@ -5,6 +5,8 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
+import android.os.Message
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -17,21 +19,33 @@ import java.io.OutputStream
 
 
 class DriverActivity : AppCompatActivity() {
-    private val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
+
+    val TAG = "DriverActivity"
+
+    private val handler = object: Handler() {
+        override fun handleMessage(msg: Message?) {
+            // TODO what the hell is this@DriverActivity?? It was suggested to me by the IDE to eliminate the error.
+            when( msg?.what ){
+                GameGlobals.MESSAGE_READ -> {
+                    Toast.makeText(this@DriverActivity, "Read" + msg?.obj, Toast.LENGTH_SHORT).show()
+                }
+                else -> Toast.makeText(this@DriverActivity, "toast!", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    var service : BluetoothGameService? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_driver)
-
-        if (bluetoothAdapter == null) {
-            // Device doesn't support Bluetooth
-        }
 
         //TODO implement me
         //if (bluetoothAdapter?.isEnabled == false) {
         //    val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
         //    startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT)
         //}
+        service = BluetoothGameService( this, handler )
     }
 
     /**
@@ -43,7 +57,7 @@ class DriverActivity : AppCompatActivity() {
      *  @reference: http://android-er.blogspot.com/2014/12/list-paired-bluetooth-devices-and-read.html
      */
     fun updatePairedDeviceList(view: View){
-        val pairedDevices: Set<BluetoothDevice>? = bluetoothAdapter?.bondedDevices
+        val pairedDevices: Set<BluetoothDevice>? = service?.adapter?.bondedDevices
         val pairedDeviceList : MutableList<BluetoothDevice>? = pairedDevices?.toMutableList()
         val pairedDeviceNames = pairedDeviceList?.map{ device -> device.name + "-" + device.address }?.toMutableList()
         val arrayAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_multiple_choice, pairedDeviceNames )
@@ -52,6 +66,24 @@ class DriverActivity : AppCompatActivity() {
         listView.onItemClickListener = AdapterView.OnItemClickListener { adapterView, _ , index, _ ->
             val clickItemObj = adapterView.adapter.getItem(index)
             Toast.makeText(this, "You clicked $clickItemObj" + " UUID is " + BluetoothGameService.GameUUID, Toast.LENGTH_SHORT).show()
+
+            val toConnect = pairedDevices?.filter{ device: BluetoothDevice -> device.address == "D4:CA:6E:7D:C5:ED" }?.elementAt(0 )
+            if( toConnect != null) {
+                try {
+                    service?.connect(toConnect)
+                    val charset = Charsets.UTF_8
+                    val byteArray = "Hello World!\n".toByteArray(charset)
+                    service?.write(byteArray)
+                    service?.write(byteArray)
+                    service?.write(byteArray)
+                    service?.write(byteArray)
+                    service?.write(byteArray)
+                    Log.e(TAG, "After call to service?.write()")
+                }
+                catch(e: Exception){
+                    Log.e(TAG, "Error during write in DriverActivity")
+                }
+            }
         }
     }
 

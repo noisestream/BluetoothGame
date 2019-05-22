@@ -20,14 +20,13 @@ import java.util.*
  * @todo - would like the states to be an enum rather than ints.
  * @todo maybe move the companion object stuff out to GameGlobals.kt
  */
-class BluetoothGameService {
+class BluetoothGameService(context: Context, h: Handler) {
     val TAG = "BluetoothGameService"
     val NAME = "BluetoothGame"
 
     companion object {
 
         val GameUUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
-        //val GameUUID : UUID = UUID.fromString("11111111-2222-3333-4444-555555555555" )
         const val STATE_NONE: Int = 0
         const val STATE_LISTEN: Int = 1
         const val STATE_CONNECTING: Int = 2
@@ -42,7 +41,7 @@ class BluetoothGameService {
     private var mState: Int = STATE_NONE // if this is not private I get a 'platform declaration clash error'
     var newState: Int = STATE_NONE
 
-    fun BluetoothGameService(context: Context, h: Handler) {
+    init {
         adapter = BluetoothAdapter.getDefaultAdapter()
         mState = STATE_NONE
         newState = mState
@@ -338,7 +337,7 @@ class BluetoothGameService {
                     //bytes = localInStream?.read(buffer)
                     bytes = localInStream?.read(buffer)!! // TODO what is going on here with the !!
                     // TODO about the aforementioned !! ->  https://discuss.kotlinlang.org/t/automatic-coercion-from-nullable-to-non-null/543
-                    handler?.obtainMessage(GameGlobals.MESSAGE_READ, bytes, -1, buffer)?.sendToTarget()
+                    handler?.obtainMessage(GameGlobals.MESSAGE_READ, bytes, -1, buffer.toString(Charsets.UTF_8))?.sendToTarget()
                 }
                 catch( e: IOException){
                     Log.e(TAG, "disconnected!")
@@ -349,6 +348,7 @@ class BluetoothGameService {
         }
 
         fun write(buffer: ByteArray){
+            Log.e(TAG, "Entering BluetoothGameService.ConnectedThread.write()")
             try{
                 localOutStream?.write(buffer)
                 handler?.obtainMessage(GameGlobals.MESSAGE_WRITE, -1, -1, buffer)?.sendToTarget()
