@@ -13,6 +13,7 @@ import android.util.Log
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.ByteBuffer
 import java.util.*
 
 
@@ -26,9 +27,16 @@ class BluetoothGameService(context: Context, h: Handler) {
     val TAG = "BluetoothGameService"
     val NAME = "BluetoothGame"
 
+    var hasData = true
+
+    var xCoord = 0.0f
+    var yCoord = 0.0f
+
     companion object {
 
-        val GameUUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
+        //val GameUUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
+        val GameUUID: UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
+
         const val STATE_NONE: Int = 0
         const val STATE_LISTEN: Int = 1
         const val STATE_CONNECTING: Int = 2
@@ -66,6 +74,7 @@ class BluetoothGameService(context: Context, h: Handler) {
     }
 
     @Synchronized fun start(){
+        Log.i(TAG, "Starting BluetoothGameService")
         if( connectThread != null ){
             connectThread?.cancel()
             connectThread = null
@@ -77,13 +86,19 @@ class BluetoothGameService(context: Context, h: Handler) {
         }
 
         if( acceptThread == null ){
+            Log.e(TAG, "Accept thread was null")
             acceptThread = AcceptThread()
+            if( acceptThread == null )
+                Log.e(TAG, "Accept Thread still null")
+            else
+                Log.e(TAG, "Accept thread no longer null")
             acceptThread?.start()
         }
         updateUserInterfaceTitle()
     }
 
     @Synchronized fun connect(device: BluetoothDevice ){
+        Log.i(TAG, "Attempting to connect BluetoothGameService to " + device.name )
         if( mState == STATE_CONNECTING){
             if( connectThread != null ){
                 connectThread?.cancel()
@@ -148,8 +163,10 @@ class BluetoothGameService(context: Context, h: Handler) {
     fun write( out : ByteArray ){
         var r : ConnectedThread? // TODO = null here says is redundant
         synchronized(this){
-            if( mState != STATE_CONNECTED )
+            if( mState != STATE_CONNECTED ) {
+                //Log.i(TAG, "Cant write data - socket disconnected.")
                 return
+            }
             r = connectedThread
         }
 
@@ -157,6 +174,7 @@ class BluetoothGameService(context: Context, h: Handler) {
     }
 
     private fun connectionFailed(){
+        Log.i(TAG, "Connection Failed!")
         val msg = handler?.obtainMessage(GameGlobals.MESSAGE_TOAST)
         val bundle = Bundle()
         bundle.putString(GameGlobals.TOAST, "Unable to connect device")
@@ -193,12 +211,14 @@ class BluetoothGameService(context: Context, h: Handler) {
             var tmp: BluetoothServerSocket? = null
 
             try{
-                tmp = adapter?.listenUsingRfcommWithServiceRecord(NAME, GameUUID)
+                //tmp = adapter?.listenUsingRfcommWithServiceRecord(NAME, GameUUID)
+                tmp = adapter?.listenUsingInsecureRfcommWithServiceRecord(NAME, GameUUID)
             }
             catch( e: IOException ){
                 Log.e(TAG, "Socket listen() failed", e)
                 // TODO serverSocket might be null here!
             }
+            Log.i(TAG, "nonnull socket for  GameUUID!")
             serverSocket = tmp
             mState = STATE_LISTEN
         }
@@ -259,12 +279,15 @@ class BluetoothGameService(context: Context, h: Handler) {
             var tmp : BluetoothSocket? = null
 
             try{
-                tmp = localDevice?.createRfcommSocketToServiceRecord(GameUUID)
+                //tmp = localDevice?.createRfcommSocketToServiceRecord(GameUUID)
+                tmp = localDevice?.createInsecureRfcommSocketToServiceRecord(GameUUID)
             }
             catch(e: IOException){
                 Log.e(TAG, "Error in ConnectThread.create()")
             }
             localSocket = tmp
+            if ( localSocket == null )
+                Log.e( TAG, "NULL local socket!!!")
             mState = STATE_CONNECTING
         }
 
@@ -332,8 +355,8 @@ class BluetoothGameService(context: Context, h: Handler) {
 
         override fun run(){
             Log.e(TAG, "beginning connectedthread")
-
-            var buffer = ByteArray(1) // TODO here I differ from the sample code. The buffer is 1024 there, but I want to avoid buffering issues.
+            // TODO make sure a float is 4 bytes in Kotlin.
+            var buffer = ByteArray(java.lang.Float.BYTES * 2) // TODO here I differ from the sample code. The buffer is 1024 there, but I want to avoid buffering issues.
             var bytes = 0
 
             while(mState == STATE_CONNECTED){
@@ -341,7 +364,7 @@ class BluetoothGameService(context: Context, h: Handler) {
                     //bytes = localInStream?.read(buffer)
                     bytes = localInStream?.read(buffer)!! // TODO what is going on here with the !!
                     // TODO about the aforementioned !! ->  https://discuss.kotlinlang.org/t/automatic-coercion-from-nullable-to-non-null/543
-                    handler?.obtainMessage(GameGlobals.MESSAGE_READ, bytes, -1, buffer.toString(Charsets.UTF_8))?.sendToTarget()
+                    handler?.obtainMessage(GameGlobals.MESSAGE_READ, bytes, -1, buffer)?.sendToTarget()
                 }
                 catch( e: IOException){
                     Log.e(TAG, "disconnected!")

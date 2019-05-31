@@ -25,6 +25,7 @@ import android.widget.ListView
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.ByteBuffer
 
 /**
  * Connect to a meatball and send accelerometer data to it to control the motion.
@@ -32,6 +33,8 @@ import java.io.OutputStream
 class DriverActivity : AppCompatActivity(), SensorEventListener {
     private var mSensorManager : SensorManager?= null
     private var mAccelerometer : Sensor?= null
+
+    private var REMOTE_BT_DEVICE = "80:4E:70:D9:74:BB"
 
     var xEvent : Float = 0.0f
     var yEvent : Float = 0.0f
@@ -50,6 +53,7 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
+
     var service : BluetoothGameService? = null
 
     /**
@@ -62,6 +66,13 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
         service = BluetoothGameService( this, handler )
         service?.start()
 
+        //val pairedDevices: Set<BluetoothDevice>? = service?.adapter?.bondedDevices
+
+        //val REMOTE_BT_DEVICE = pairedDevices?.filter{ device: BluetoothDevice -> device.address ==  }?.elementAt(0 )
+        //Log.i(TAG, "Found remote BT device:" + REMOTE_BT_DEVICE?.name )
+
+        //service?.connect( REMOTE_BT_DEVICE!! );
+
         mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         // focus in accelerometer
         mAccelerometer = mSensorManager!!.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
@@ -71,6 +82,8 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
         window.setFlags(
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
             WindowManager.LayoutParams.FLAG_FULLSCREEN)
+
+        //updatePairedDeviceList()
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
@@ -78,11 +91,18 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent?) {
         if (event != null) {
+            //Log.i(TAG, "Sensor changed!")
             // When there is a sensor event, send out the data over bluetooth.
             //ground!!.updateMe(event.values[1] , event.values[0])
             synchronized(this){
                 xEvent = event.values[1]
                 yEvent = event.values[2]
+                val shortX = java.lang.Float.floatToIntBits(xEvent);
+                val xBytes = ByteBuffer.allocate(java.lang.Float.BYTES).putInt(shortX);
+                val shortY = java.lang.Float.floatToIntBits(yEvent);
+                val yBytes = ByteBuffer.allocate(java.lang.Float.BYTES).putInt(shortY);
+                service?.write( xBytes.array() );
+                service?.write( yBytes.array() );
             }
         }
     }
@@ -106,6 +126,7 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
      *  @reference: https://www.dev2qa.com/android-listview-example/
      *  @reference: http://android-er.blogspot.com/2014/12/list-paired-bluetooth-devices-and-read.html
      */
+
     fun updatePairedDeviceList(view: View){
         val pairedDevices: Set<BluetoothDevice>? = service?.adapter?.bondedDevices
         val pairedDeviceList : MutableList<BluetoothDevice>? = pairedDevices?.toMutableList()
@@ -114,29 +135,27 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
         val listView = findViewById<ListView>(R.id.textView)
         listView.adapter = arrayAdapter
         listView.onItemClickListener = AdapterView.OnItemClickListener { adapterView, _ , index, _ ->
-            val clickItemObj = adapterView.adapter.getItem(index)
-            Toast.makeText(this, "You clicked $clickItemObj" + " UUID is " + BluetoothGameService.GameUUID, Toast.LENGTH_SHORT).show()
+            //val clickItemObj = adapterView.adapter.getItem(index)
+            //Toast.makeText(this, "You clicked $clickItemObj" + " UUID is " + BluetoothGameService.GameUUID, Toast.LENGTH_SHORT).show()
+            val iter = pairedDevices?.iterator()
+            iter?.forEach {
+                Log.i(TAG, it.address)
+            }
 
-            val toConnect = pairedDevices?.filter{ device: BluetoothDevice -> device.address == "D4:CA:6E:7D:C5:ED" }?.elementAt(0 )
-            /*
+            val toConnect = pairedDevices?.filter{ device: BluetoothDevice -> device.address == REMOTE_BT_DEVICE }?.elementAt(0 )
+
             if( toConnect != null) {
+                Log.i(TAG, "Trying to connect a device!")
                 try {
                     service?.connect(toConnect)
-                    val charset = Charsets.UTF_8
-                    val byteArray = "Hello World!\n".toByteArray(charset)
-                    service?.write(byteArray)
-                    service?.write(byteArray)
-                    service?.write(byteArray)
-                    service?.write(byteArray)
-                    service?.write(byteArray)
-                    Log.e(TAG, "After call to service?.write()")
                 }
                 catch(e: Exception){
-                    Log.e(TAG, "Error during write in DriverActivity")
+                    Log.e(TAG, "Error during connect in DriverActivity")
                 }
             }
-            */
+
         }
     }
+
 
 }
