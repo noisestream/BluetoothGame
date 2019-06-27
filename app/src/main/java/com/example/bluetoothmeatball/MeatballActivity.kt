@@ -2,6 +2,7 @@
 
 import android.app.Service
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -65,6 +66,13 @@ import java.nio.ByteBuffer
 
         ground = GroundView(this)
         setContentView(ground)
+
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
+
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_FULLSCREEN,
+            WindowManager.LayoutParams.FLAG_FULLSCREEN)
     }
 
     class DrawThread (surfaceHolder: SurfaceHolder, panel : GroundView) : Thread() {
@@ -105,8 +113,8 @@ import java.nio.ByteBuffer
 class GroundView(context: Context?) : SurfaceView(context), SurfaceHolder.Callback{
 
     // ball coordinates
-    var cx : Float = 10.toFloat()
-    var cy : Float = 10.toFloat()
+    var cx : Float = 0.toFloat()
+    var cy : Float = 0.toFloat()
 
     // last position increment
 

@@ -38,6 +38,7 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
 
     var xEvent : Float = 0.0f
     var yEvent : Float = 0.0f
+    var zEvent : Float = 0.0f
 
     val TAG = "DriverActivity"
 
@@ -77,7 +78,8 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
         // focus in accelerometer
         mAccelerometer = mSensorManager!!.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         // setup the window
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
 
         window.setFlags(
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -86,7 +88,7 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
         //updatePairedDeviceList()
     }
 
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) { h
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
@@ -95,8 +97,9 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
             // When there is a sensor event, send out the data over bluetooth.
             //ground!!.updateMe(event.values[1] , event.values[0])
             synchronized(this){
-                xEvent = event.values[1]
-                yEvent = event.values[2]
+                xEvent = -1 * event.values[0]
+                yEvent = event.values[1]
+                zEvent = event.values[2]
                 val shortX = java.lang.Float.floatToIntBits(xEvent);
                 val xBytes = ByteBuffer.allocate(java.lang.Float.BYTES).putInt(shortX);
                 val shortY = java.lang.Float.floatToIntBits(yEvent);
