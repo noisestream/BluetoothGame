@@ -3,20 +3,26 @@
               xmlns:tools="http://schemas.android.com/tools"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
+              android:gravity="center"
               android:orientation="vertical"
               tools:context=".DriverActivity">
-<Button
-        android:layout_width="wrap_content"
+    <Button
+        android:layout_width="300dp"
         android:layout_height="wrap_content"
         android:id="@+id/btnGet"
-        android:text="Get Paired Devices"
-        android:layout_marginLeft="130dp"
-        android:layout_marginTop="200dp"
-        android:onClick="updatePairedDeviceList"/>
-<ListView
+        android:text="Choose Your Meatball"
+        android:layout_marginTop="150dp"
+        android:layout_marginBottom="10dp"
+        android:paddingRight="25dp"
+        android:paddingLeft="25dp"
+        android:onClick="updatePairedDeviceList" android:background="@android:color/holo_red_dark"
+        android:fontFamily="monospace" android:textSize="14sp" android:textStyle="bold"
+    />
+    <ListView
         android:id="@+id/textView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="300dp"
+        android:layout_height="150dp"
+        android:fadeScrollbars="false"
         android:clickable="true">
-</ListView>
+    </ListView>
 </LinearLayout>

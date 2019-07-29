@@ -49,6 +49,9 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
                 GameGlobals.MESSAGE_READ -> {
                     Toast.makeText(this@DriverActivity, "Read" + msg?.obj, Toast.LENGTH_SHORT).show()
                 }
+                GameGlobals.MESSAGE_WRITE-> {
+                    Log.i(TAG,"Write")
+                }
                 else -> Toast.makeText(this@DriverActivity, "toast!", Toast.LENGTH_SHORT).show()
             }
         }
@@ -62,17 +65,12 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+
         setContentView(R.layout.activity_driver)
 
         service = BluetoothGameService( this, handler )
         service?.start()
-
-        //val pairedDevices: Set<BluetoothDevice>? = service?.adapter?.bondedDevices
-
-        //val REMOTE_BT_DEVICE = pairedDevices?.filter{ device: BluetoothDevice -> device.address ==  }?.elementAt(0 )
-        //Log.i(TAG, "Found remote BT device:" + REMOTE_BT_DEVICE?.name )
-
-        //service?.connect( REMOTE_BT_DEVICE!! );
 
         mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         // focus in accelerometer
@@ -84,11 +82,9 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
         window.setFlags(
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
             WindowManager.LayoutParams.FLAG_FULLSCREEN)
-
-        //updatePairedDeviceList()
     }
 
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) { h
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
@@ -134,12 +130,10 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
         val pairedDevices: Set<BluetoothDevice>? = service?.adapter?.bondedDevices
         val pairedDeviceList : MutableList<BluetoothDevice>? = pairedDevices?.toMutableList()
         val pairedDeviceNames = pairedDeviceList?.map{ device -> device.name + "-" + device.address }?.toMutableList()
-        val arrayAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_multiple_choice, pairedDeviceNames )
+        val arrayAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, pairedDeviceNames )
         val listView = findViewById<ListView>(R.id.textView)
         listView.adapter = arrayAdapter
         listView.onItemClickListener = AdapterView.OnItemClickListener { adapterView, _ , index, _ ->
-            //val clickItemObj = adapterView.adapter.getItem(index)
-            //Toast.makeText(this, "You clicked $clickItemObj" + " UUID is " + BluetoothGameService.GameUUID, Toast.LENGTH_SHORT).show()
             val iter = pairedDevices?.iterator()
             iter?.forEach {
                 Log.i(TAG, it.address)
