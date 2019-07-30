@@ -33,7 +33,7 @@ import java.nio.ByteBuffer
 class DriverActivity : AppCompatActivity(), SensorEventListener {
     private var mSensorManager : SensorManager?= null
     private var mAccelerometer : Sensor?= null
-
+    private var eventCount = 0
     private var REMOTE_BT_DEVICE = "80:4E:70:D9:74:BB"
 
     var xEvent : Float = 0.0f
@@ -57,7 +57,6 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
-
     var service : BluetoothGameService? = null
 
     /**
@@ -78,7 +77,6 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
         // setup the window
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
-
         window.setFlags(
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
             WindowManager.LayoutParams.FLAG_FULLSCREEN)
@@ -87,21 +85,31 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
     }
 
+
+    /**
+     * @TODO verify that this is okay:
+     * I am going to send only the Nth sensor update? Will that work?
+     * Need to verify how the receiver is processing the update, maybe that is the error.
+     * I find some directions very difficult to move in using the current implementation.
+     */
     override fun onSensorChanged(event: SensorEvent?) {
-        if (event != null) {
+        eventCount++
+        if ((event != null) && (eventCount == 1)){
             //Log.i(TAG, "Sensor changed!")
+            eventCount=0
             // When there is a sensor event, send out the data over bluetooth.
             //ground!!.updateMe(event.values[1] , event.values[0])
             synchronized(this){
                 xEvent = -1 * event.values[0]
                 yEvent = event.values[1]
                 zEvent = event.values[2]
-                val shortX = java.lang.Float.floatToIntBits(xEvent);
-                val xBytes = ByteBuffer.allocate(java.lang.Float.BYTES).putInt(shortX);
-                val shortY = java.lang.Float.floatToIntBits(yEvent);
-                val yBytes = ByteBuffer.allocate(java.lang.Float.BYTES).putInt(shortY);
-                service?.write( xBytes.array() );
-                service?.write( yBytes.array() );
+                Log.i(TAG,xEvent.toString() + " " + yEvent.toString() )
+                val shortX = java.lang.Float.floatToIntBits(xEvent)
+                val xBytes = ByteBuffer.allocate(java.lang.Float.BYTES).putInt(shortX)
+                val shortY = java.lang.Float.floatToIntBits(yEvent)
+                val yBytes = ByteBuffer.allocate(java.lang.Float.BYTES).putInt(shortY)
+                service?.write( xBytes.array() )
+                service?.write( yBytes.array() )
             }
         }
     }
@@ -139,12 +147,13 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
                 Log.i(TAG, it.address)
             }
 
-            val toConnect = pairedDevices?.filter{ device: BluetoothDevice -> device.address == REMOTE_BT_DEVICE }?.elementAt(0 )
+            val toConnect = pairedDevices?.elementAt(index)
 
             if( toConnect != null) {
                 Log.i(TAG, "Trying to connect a device!")
                 try {
                     service?.connect(toConnect)
+                    //TODO navigate to the connected screen.
                 }
                 catch(e: Exception){
                     Log.e(TAG, "Error during connect in DriverActivity")

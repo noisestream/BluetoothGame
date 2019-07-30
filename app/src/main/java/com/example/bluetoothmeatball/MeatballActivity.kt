@@ -7,8 +7,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Point
-import android.hardware.Sensor
-import android.hardware.SensorManager
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
@@ -45,6 +43,7 @@ import java.nio.ByteBuffer
                     val data = msg.obj as ByteArray
                     val xCoord = ByteBuffer.wrap(data).getFloat(0);
                     val yCoord = ByteBuffer.wrap(data).getFloat(4);
+                    Log.i(TAG, "x="+xCoord.toString() + " y=" + yCoord.toString())
                     ground!!.updateMe(xCoord, yCoord)
                 }
                 GameGlobals.MESSAGE_DEVICE_NAME, GameGlobals.MESSAGE_TOAST->
@@ -111,7 +110,7 @@ import java.nio.ByteBuffer
 }
 
 class GroundView(context: Context?) : SurfaceView(context), SurfaceHolder.Callback{
-
+    private val TAG = "GroundView"
     // ball coordinates
     var cx : Float = 0.toFloat()
     var cy : Float = 0.toFloat()
@@ -119,7 +118,6 @@ class GroundView(context: Context?) : SurfaceView(context), SurfaceHolder.Callba
     // last position increment
 
     var lastGx : Float = 0.toFloat()
-    var lastGy : Float = 0.toFloat()
 
     // graphic size of the ball
 
@@ -132,11 +130,11 @@ class GroundView(context: Context?) : SurfaceView(context), SurfaceHolder.Callba
 
     var Windowwidth : Int = 0
     var Windowheight : Int = 0
+    var gameWidth: Int = 0
+    var gameHeight: Int = 0
 
-    // is touching the edge ?
-
-    var noBorderX = false
-    var noBorderY = false
+    var onBorderX = false
+    var onBorderY = false
 
     var vibratorService : Vibrator?= null
     var thread : MeatballActivity.DrawThread?= null
@@ -157,6 +155,8 @@ class GroundView(context: Context?) : SurfaceView(context), SurfaceHolder.Callba
         picHeight = icon!!.height
         picWidth = icon!!.width
         vibratorService = (getContext().getSystemService(Service.VIBRATOR_SERVICE)) as Vibrator
+        gameWidth = Windowwidth - picWidth // todo more appropriate name here than gameWidth
+        gameHeight = Windowheight - picHeight // todo more appropriate name here than gameHeight
     }
 
     override fun surfaceChanged(holder: SurfaceHolder?, format: Int, width: Int, height: Int) {
@@ -186,49 +186,48 @@ class GroundView(context: Context?) : SurfaceView(context), SurfaceHolder.Callba
         }
     }
 
+    /**
+     * @param inx - the acceleration felt in the x direction on the driver phone
+     * @param iny - the acceleration felt in the y direction on the driver phone
+     * @TODO hard to maintain cx = 0. For some reason the accelerometer is
+     * often reporting a positive x Gravitation even when the axis is pointed down.
+     * Could be an accelerometer (hardware) bug, could be android os, could be my code.
+     */
     fun updateMe(inx : Float , iny : Float){
-        lastGx += inx
-        lastGy += iny
-
-        cx += lastGx
-        cy += lastGy
-
-        if(cx > (Windowwidth - picWidth)){
-            cx = (Windowwidth - picWidth).toFloat()
-            lastGx = 0F
-            if (noBorderX){
-                vibratorService!!.vibrate(100)
-                noBorderX = false
+        cx += inx
+        cy += iny
+        if(cx > gameWidth ){
+            cx = gameWidth.toFloat()
+            if (onBorderX){
+                vibratorService!!.vibrate(100) // deprecated
+                onBorderX = false
             }
         }
         else if(cx < (0)){
             cx = 0F
-            lastGx = 0F
-            if(noBorderX){
+            if(onBorderX){
                 vibratorService!!.vibrate(100)
-                noBorderX = false
+                onBorderX = false
             }
         }
-        else{ noBorderX = true }
+        else{ onBorderX = true }
 
-        if (cy > (Windowheight - picHeight)){
-            cy = (Windowheight - picHeight).toFloat()
-            lastGy = 0F
-            if (noBorderY){
+        if (cy > (gameHeight)){
+            cy = (gameHeight).toFloat()
+            if (onBorderY){
                 vibratorService!!.vibrate(100)
-                noBorderY = false
+                onBorderY = false
             }
         }
 
         else if(cy < (0)){
             cy = 0F
-            lastGy = 0F
-            if (noBorderY){
+            if (onBorderY){
                 vibratorService!!.vibrate(100)
-                noBorderY= false
+                onBorderY= false
             }
         }
-        else{ noBorderY = true }
+        else{ onBorderY = true }
 
         invalidate()
     }
