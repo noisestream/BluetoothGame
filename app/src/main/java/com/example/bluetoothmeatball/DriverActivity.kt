@@ -34,7 +34,6 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
     private var mSensorManager : SensorManager?= null
     private var mAccelerometer : Sensor?= null
     private var eventCount = 0
-    private var REMOTE_BT_DEVICE = "80:4E:70:D9:74:BB"
 
     var xEvent : Float = 0.0f
     var yEvent : Float = 0.0f
@@ -57,7 +56,7 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
-    var service : BluetoothGameService? = null
+    var service : BluetoothGameClient? = null
 
     /**
      * @todo Enable the bit of code for checking if the bluetooth adapter is on!
@@ -68,7 +67,7 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
 
         setContentView(R.layout.activity_driver)
 
-        service = BluetoothGameService( this, handler )
+        service = BluetoothGameClient( this, handler )
         service?.start()
 
         mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager

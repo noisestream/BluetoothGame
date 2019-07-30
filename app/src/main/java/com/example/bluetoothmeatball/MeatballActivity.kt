@@ -23,7 +23,7 @@ import java.nio.ByteBuffer
  class MeatballActivity : AppCompatActivity() {
 
     var ground : GroundView ?= null
-    var service : BluetoothGameService? = null
+    var service : BluetoothGameServer? = null
 
     val TAG = "MeatballActivity"
 
@@ -39,7 +39,7 @@ import java.nio.ByteBuffer
                     ground!!.updateMe(xCoord, yCoord)
                 }
                 GameGlobals.MESSAGE_READ -> {
-                    Toast.makeText(this@MeatballActivity, "Read" + msg?.obj, Toast.LENGTH_SHORT).show()
+                    //Toast.makeText(this@MeatballActivity, "Read" + msg?.obj, Toast.LENGTH_SHORT).show()
                     val data = msg.obj as ByteArray
                     val xCoord = ByteBuffer.wrap(data).getFloat(0);
                     val yCoord = ByteBuffer.wrap(data).getFloat(4);
@@ -59,7 +59,7 @@ import java.nio.ByteBuffer
         Log.i(TAG, "onCreate() Meatball Activity");
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_meatball)
-        service = BluetoothGameService(this, handler)
+        service = BluetoothGameServer(this, handler)
         service!!.start()
         Log.i(TAG, "MeatballActivity started BluetoothGameService")
 
@@ -114,10 +114,6 @@ class GroundView(context: Context?) : SurfaceView(context), SurfaceHolder.Callba
     // ball coordinates
     var cx : Float = 0.toFloat()
     var cy : Float = 0.toFloat()
-
-    // last position increment
-
-    var lastGx : Float = 0.toFloat()
 
     // graphic size of the ball
 
