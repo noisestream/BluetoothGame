@@ -111,6 +111,8 @@ import java.nio.ByteBuffer
 
 class GroundView(context: Context?) : SurfaceView(context), SurfaceHolder.Callback{
     private val TAG = "GroundView"
+    var buzzNow : Boolean = false
+    var myContext = context
     // ball coordinates
     var cx : Float = 0.toFloat()
     var cy : Float = 0.toFloat()
@@ -138,7 +140,7 @@ class GroundView(context: Context?) : SurfaceView(context), SurfaceHolder.Callba
 
 
     init {
-        holder.addCallback(this)
+        holder.addCallback(this) // TODO how do I know this is the member holder and not a disposable copy tjhat disappears after the init{} ends??
         //create a thread
         thread = MeatballActivity.DrawThread(holder, this)
         // get references and sizes of the objects
@@ -197,6 +199,7 @@ class GroundView(context: Context?) : SurfaceView(context), SurfaceHolder.Callba
             if (onBorderX){
                 vibratorService!!.vibrate(100) // deprecated
                 onBorderX = false
+                buzzNow = true
             }
         }
         else if(cx < (0)){
@@ -204,15 +207,20 @@ class GroundView(context: Context?) : SurfaceView(context), SurfaceHolder.Callba
             if(onBorderX){
                 vibratorService!!.vibrate(100)
                 onBorderX = false
+                buzzNow = true
             }
         }
-        else{ onBorderX = true }
+        else{
+            onBorderX = true
+            buzzNow = false
+        }
 
         if (cy > (gameHeight)){
             cy = (gameHeight).toFloat()
             if (onBorderY){
                 vibratorService!!.vibrate(100)
                 onBorderY = false
+                buzzNow = true
             }
         }
 
@@ -221,9 +229,13 @@ class GroundView(context: Context?) : SurfaceView(context), SurfaceHolder.Callba
             if (onBorderY){
                 vibratorService!!.vibrate(100)
                 onBorderY= false
+                buzzNow = true
             }
         }
-        else{ onBorderY = true }
+        else{
+            onBorderY = true
+            buzzNow = false
+        }
 
         invalidate()
     }

@@ -6,8 +6,7 @@ import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
 import android.content.Context
 import android.content.Intent
-import android.os.Handler
-import android.os.Bundle
+import android.os.*
 import android.support.v4.app.ActivityCompat.startActivityForResult
 import android.util.Log
 import java.io.IOException
@@ -28,6 +27,7 @@ import java.util.*
 class BluetoothGameClient(context: Context, h: Handler) {
     val TAG = "BluetoothGameClient"
     val NAME = "BluetoothGame"
+    val myContext  = context
 
     companion object {
         //val GameUUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
@@ -263,14 +263,29 @@ class BluetoothGameClient(context: Context, h: Handler) {
 
         override fun run(){
             Log.e(TAG, "beginning connectedthread")
-            // TODO make sure a float is 4 bytes in Kotlin.
-            val buffer = ByteArray(java.lang.Float.BYTES * 2) // TODO here I differ from the sample code. The buffer is 1024 there, but I want to avoid buffering issues.
+            val VibrationMessageSize = 1
+            val VibrationMessage : Byte = 0x01
+            val buffer = ByteArray(VibrationMessageSize) // TODO here I differ from the sample code. The buffer is 1024 there, but I want to avoid buffering issues.
             var bytes = 0
 
             while(mState == STATE_CONNECTED){
                 try{
                     //bytes = localInStream?.read(buffer)
                     bytes = localInStream?.read(buffer)!! // TODO what is going on here with the !!
+                    if(buffer[0] == VibrationMessage){
+                        //var v = getSystemService(Context.VIBRATOR_SERVICE)
+                        //TODO Vibrate.
+                        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                            var vibe:Vibrator = myContext?.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                            var effect: VibrationEffect = VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
+                            vibe.vibrate(effect)
+                        }
+                        else{
+                            var vibe:Vibrator = myContext?.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                            vibe.vibrate(500)
+                        }
+
+                    }
                     // TODO about the aforementioned !! ->  https://discuss.kotlinlang.org/t/automatic-coercion-from-nullable-to-non-null/543
                     handler?.obtainMessage(GameGlobals.MESSAGE_READ, bytes, -1, buffer)?.sendToTarget()
                 }
