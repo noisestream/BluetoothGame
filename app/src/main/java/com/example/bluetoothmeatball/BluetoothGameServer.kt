@@ -8,11 +8,14 @@ import android.content.Context
 import android.content.Intent
 import android.os.Handler
 import android.os.Bundle
+import android.os.Message
 import android.support.v4.app.ActivityCompat.startActivityForResult
 import android.util.Log
+import android.widget.Toast
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.lang.ref.WeakReference
 import java.nio.ByteBuffer
 import java.util.*
 
@@ -23,14 +26,19 @@ import java.util.*
  * @todo - would like the states to be an enum rather than ints.
  * @todo maybe move the companion object stuff out to GameGlobals.kt
  */
-class BluetoothGameServer(context: Context, h: Handler) {
-    val TAG = "BluetoothGameServer"
-    val NAME = "BluetoothGame"
+class BluetoothGameServer(gameSurface: GameSurface) {
+    private val TAG = "BluetoothGameServer"
+
+    private val NAME = "BluetoothGame"
+
+    private val weakRef = WeakReference<BluetoothGameServer>(this)
+
+    private val handler = BTMsgHandler(weakRef)
+
+    private var gameSurface: GameSurface? = null
 
     companion object {
-        //val GameUUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
         val GameUUID: UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
-
         const val STATE_NONE: Int = 0
         const val STATE_LISTEN: Int = 1
         const val STATE_CONNECTING: Int = 2
@@ -38,7 +46,6 @@ class BluetoothGameServer(context: Context, h: Handler) {
     }
 
     var adapter: BluetoothAdapter? = null
-    var handler: Handler? = null
     var connectedThread: ConnectedThread? = null
     private var acceptThread: AcceptThread? = null
     private var mState: Int = STATE_NONE // if this is not private I get a 'platform declaration clash error'
@@ -48,7 +55,7 @@ class BluetoothGameServer(context: Context, h: Handler) {
         adapter = BluetoothAdapter.getDefaultAdapter()
         mState = STATE_NONE
         newState = mState
-        handler = h
+        this.gameSurface = gameSurface
     }
 
     @Synchronized
@@ -292,6 +299,29 @@ class BluetoothGameServer(context: Context, h: Handler) {
             }
             catch( e: IOException){
                 Log.e(TAG, "close() of connection socket failed!")
+            }
+        }
+    }
+
+    class BTMsgHandler(private val btGameServer: WeakReference<BluetoothGameServer>): Handler() {
+        override fun handleMessage(msg: Message?) {
+            // TODO what the hell is this@DriverActivity?? It was suggested to me by the IDE to eliminate the error.
+            when( msg?.what ){
+                //GameGlobals.MESSAGE_WRITE -> {
+                //    val data = msg.obj as ByteArray
+                //    val xCoord = ByteBuffer.wrap(data).getFloat(0);
+                //    val yCoord = ByteBuffer.wrap(data).getFloat(4);
+                //    btGameServer.get()?.gameSurface!!.updateMe(xCoord, yCoord) // TODO !!. or ?.
+                //}
+                GameGlobals.MESSAGE_READ -> {
+                    val data = msg.obj as ByteArray
+                    val xCoord = ByteBuffer.wrap(data).getFloat(0);
+                    val yCoord = ByteBuffer.wrap(data).getFloat(4);
+                    btGameServer.get()?.gameSurface!!.updateMe(xCoord, yCoord) // TODO !!. or ?.
+                }
+                else ->{
+                    val pass: Unit = Unit
+                }
             }
         }
     }

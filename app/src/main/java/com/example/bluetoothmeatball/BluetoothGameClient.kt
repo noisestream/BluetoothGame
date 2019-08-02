@@ -9,9 +9,11 @@ import android.content.Intent
 import android.os.*
 import android.support.v4.app.ActivityCompat.startActivityForResult
 import android.util.Log
+import android.widget.Toast
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.lang.ref.WeakReference
 import java.nio.ByteBuffer
 import java.util.*
 
@@ -24,10 +26,11 @@ import java.util.*
  * @todo - would like the states to be an enum rather than ints.
  * @todo maybe move the companion object stuff out to GameGlobals.kt
  */
-class BluetoothGameClient(context: Context, h: Handler) {
+class BluetoothGameClient() {
     val TAG = "BluetoothGameClient"
     val NAME = "BluetoothGame"
-    val myContext  = context
+    private val weakRef = WeakReference<BluetoothGameClient>(this)
+    private val handler = BTMsgHandler(weakRef)
 
     companion object {
         //val GameUUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
@@ -40,7 +43,6 @@ class BluetoothGameClient(context: Context, h: Handler) {
     }
 
     var adapter: BluetoothAdapter? = null
-    var handler: Handler? = null
     var connectThread: ConnectThread? = null
     var connectedThread: ConnectedThread? = null
     private var mState: Int = STATE_NONE // if this is not private I get a 'platform declaration clash error'
@@ -50,14 +52,13 @@ class BluetoothGameClient(context: Context, h: Handler) {
         adapter = BluetoothAdapter.getDefaultAdapter()
         mState = STATE_NONE
         newState = mState
-        handler = h
     }
 
     @Synchronized
     fun updateUserInterfaceTitle() {
         mState = getState()
         newState = mState
-        handler?.obtainMessage(GameGlobals.MESSAGE_STATE_CHANGE, newState, -1)?.sendToTarget()
+        handler.obtainMessage(GameGlobals.MESSAGE_STATE_CHANGE, newState, -1)?.sendToTarget()
     }
 
 
@@ -116,11 +117,11 @@ class BluetoothGameClient(context: Context, h: Handler) {
         connectedThread = ConnectedThread( socket )
         connectedThread?.start()
 
-        val msg = handler?.obtainMessage( GameGlobals.MESSAGE_DEVICE_NAME )
+        val msg = handler.obtainMessage( GameGlobals.MESSAGE_DEVICE_NAME )
         val bundle = Bundle()
         bundle.putString(GameGlobals.DEVICE_NAME, device?.getName())
         msg?.setData(bundle)
-        handler?.sendMessage(msg)
+        handler.sendMessage(msg)
         updateUserInterfaceTitle()
     }
 
@@ -152,11 +153,11 @@ class BluetoothGameClient(context: Context, h: Handler) {
 
     private fun connectionFailed(){
         Log.i(TAG, "Connection Failed!")
-        val msg = handler?.obtainMessage(GameGlobals.MESSAGE_TOAST)
+        val msg = handler.obtainMessage(GameGlobals.MESSAGE_TOAST)
         val bundle = Bundle()
         bundle.putString(GameGlobals.TOAST, "Unable to connect device")
         msg?.setData(bundle) //TODO could probable say msg.data =
-        handler?.sendMessage(msg)
+        handler.sendMessage(msg)
 
         mState = STATE_NONE
         updateUserInterfaceTitle()
@@ -165,11 +166,11 @@ class BluetoothGameClient(context: Context, h: Handler) {
     }
 
     private fun connectionLost(){
-        val msg = handler?.obtainMessage(GameGlobals.MESSAGE_TOAST)
+        val msg = handler.obtainMessage(GameGlobals.MESSAGE_TOAST)
         val bundle = Bundle()
         bundle.putString(GameGlobals.TOAST, "Device Connection Lost")
         msg?.setData(bundle)
-        handler?.sendMessage(msg)
+        handler.sendMessage(msg)
         mState = STATE_NONE
         updateUserInterfaceTitle()
 
@@ -272,6 +273,7 @@ class BluetoothGameClient(context: Context, h: Handler) {
                 try{
                     //bytes = localInStream?.read(buffer)
                     bytes = localInStream?.read(buffer)!! // TODO what is going on here with the !!
+                    /*
                     if(buffer[0] == VibrationMessage){
                         //var v = getSystemService(Context.VIBRATOR_SERVICE)
                         //TODO Vibrate.
@@ -286,6 +288,7 @@ class BluetoothGameClient(context: Context, h: Handler) {
                         }
 
                     }
+                    */
                     // TODO about the aforementioned !! ->  https://discuss.kotlinlang.org/t/automatic-coercion-from-nullable-to-non-null/543
                     handler?.obtainMessage(GameGlobals.MESSAGE_READ, bytes, -1, buffer)?.sendToTarget()
                 }
@@ -314,6 +317,19 @@ class BluetoothGameClient(context: Context, h: Handler) {
             }
             catch( e: IOException){
                 Log.e(TAG, "close() of connection socket failed!")
+            }
+        }
+    }
+
+    class BTMsgHandler(private val outerclass: WeakReference<BluetoothGameClient>): Handler() {
+        override fun handleMessage(msg: Message?) {
+            when( msg?.what ){
+                GameGlobals.MESSAGE_WRITE-> {
+                    Log.i(outerclass.get()?.TAG,"Write")
+                }
+                else -> {
+                    val pass: Unit = Unit
+                }
             }
         }
     }

@@ -42,20 +42,6 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
 
     val TAG = "DriverActivity"
 
-    private val handler = object: Handler() {
-        override fun handleMessage(msg: Message?) {
-            // TODO what the hell is this@DriverActivity?? It was suggested to me by the IDE to eliminate the error.
-            when( msg?.what ){
-                GameGlobals.MESSAGE_READ -> {
-                    Toast.makeText(this@DriverActivity, "Read" + msg?.obj, Toast.LENGTH_SHORT).show()
-                }
-                GameGlobals.MESSAGE_WRITE-> {
-                    Log.i(TAG,"Write")
-                }
-                else -> Toast.makeText(this@DriverActivity, "toast!", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
 
     var service : BluetoothGameClient? = null
 
@@ -68,7 +54,7 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
 
         setContentView(R.layout.activity_driver)
 
-        service = BluetoothGameClient( this, handler )
+        service = BluetoothGameClient() // prob need a reference to this so that we can vibrate  the context. TODO
         service?.start()
 
         mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -103,7 +89,7 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
                 xEvent = -1 * event.values[0]
                 yEvent = event.values[1]
                 zEvent = event.values[2]
-                Log.i(TAG,xEvent.toString() + " " + yEvent.toString() )
+                //Log.i(TAG,xEvent.toString() + " " + yEvent.toString() )
                 val shortX = java.lang.Float.floatToIntBits(xEvent)
                 val xBytes = ByteBuffer.allocate(java.lang.Float.BYTES).putInt(shortX)
                 val shortY = java.lang.Float.floatToIntBits(yEvent)
@@ -125,11 +111,17 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
         mSensorManager!!.unregisterListener(this)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.i(TAG, "onDestroy()")
+    }
+
     /**
      * Update ListView
      *
      *  @todo Don't understand the <String!> type expected for the MutableList here.
      *        Would like the warning to go away.
+     *        @todo Make sure bluetooth is on.
      *  @reference: https://www.dev2qa.com/android-listview-example/
      *  @reference: http://android-er.blogspot.com/2014/12/list-paired-bluetooth-devices-and-read.html
      */

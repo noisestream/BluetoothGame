@@ -4,8 +4,10 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.WindowManager
+import android.widget.Button
 
 class MainActivity : AppCompatActivity() {
 
@@ -21,13 +23,20 @@ class MainActivity : AppCompatActivity() {
             WindowManager.LayoutParams.FLAG_FULLSCREEN)
     }
 
+    override fun onResume(){
+        super.onResume()
+        Log.i("MainActivity", "onResume")
+    }
+
     fun chooseDriver( view: View) {
         val driverIntent = Intent( this, DriverActivity::class.java)
         startActivity( driverIntent )
     }
 
     fun chooseMeatball(view: View) {
+        Log.i("MainActivity", "chooseMeatball!")
         val meatballIntent = Intent( this, MeatballActivity::class.java)
+        meatballIntent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
         startActivity( meatballIntent )
     }
 }
