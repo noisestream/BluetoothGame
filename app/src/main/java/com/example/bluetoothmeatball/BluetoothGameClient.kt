@@ -40,11 +40,10 @@ class BluetoothGameClient() {
         const val STATE_CONNECTING: Int = 2
         const val STATE_CONNECTED: Int = 3
     }
-
     var adapter: BluetoothAdapter? = null
     var connectThread: ConnectThread? = null
     var connectedThread: ConnectedThread? = null
-    private var mState: Int = STATE_NONE // if this is not private I get a 'platform declaration clash error'
+    var mState: Int = STATE_NONE // if this is not private I get a 'platform declaration clash error'
 
     init {
         adapter = BluetoothAdapter.getDefaultAdapter()
@@ -181,7 +180,6 @@ class BluetoothGameClient() {
             synchronized(this){
                 connectThread = null
             }
-
             connected( localSocket, localDevice)
         }
 

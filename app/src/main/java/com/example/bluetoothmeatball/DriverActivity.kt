@@ -142,6 +142,8 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
             if( toConnect != null) {
                 Log.i(Constants.TAG, "Trying to connect a device!")
                 try {
+                    Log.i(Constants.TAG, "Connecting")
+                    Toast.makeText(this@DriverActivity, "Trying to connect.", Toast.LENGTH_SHORT).show()
                     service?.connect(toConnect)
                     //TODO navigate to the connected screen.
                 }

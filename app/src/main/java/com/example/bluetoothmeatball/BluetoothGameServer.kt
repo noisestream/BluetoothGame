@@ -63,7 +63,6 @@ class BluetoothGameServer(gameSurface: GameSurface) {
         handler?.obtainMessage(GameGlobals.MESSAGE_STATE_CHANGE, newState, -1)?.sendToTarget()
     }
 
-
     /**
      * This method is stupid. No need for this I dont think, just make mState a public member.
      */
@@ -141,19 +140,6 @@ class BluetoothGameServer(gameSurface: GameSurface) {
         r?.write(out) // TODO what if r is null? That would throw an uncaught exception!
     }
 
-    private fun connectionFailed(){
-        Log.i(Constants.TAG, "Connection Failed!")
-        val msg = handler?.obtainMessage(GameGlobals.MESSAGE_TOAST)
-        val bundle = Bundle()
-        bundle.putString(GameGlobals.TOAST, "Unable to connect device")
-        msg?.setData(bundle) //TODO could probable say msg.data =
-        handler?.sendMessage(msg)
-
-        mState = STATE_NONE
-        updateUserInterfaceTitle()
-        this.start()
-    }
-
     private fun connectionLost(){
         val msg = handler?.obtainMessage(GameGlobals.MESSAGE_TOAST)
         val bundle = Bundle()
@@ -164,7 +150,7 @@ class BluetoothGameServer(gameSurface: GameSurface) {
         updateUserInterfaceTitle()
 
         // TODO not sure if this is okay
-        this.start() // BluetoothGameService.this.start()
+        this.start()
     }
 
     //  NOTE needs to be marked "inner class" because it needs access to the parent class' members

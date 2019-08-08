@@ -2,16 +2,16 @@ package com.example.bluetoothmeatball
 
 import android.app.Service
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Point
+import android.graphics.*
 import android.os.Vibrator
 import android.util.Log
 import android.view.Display
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.WindowManager
+import java.lang.Math.pow
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 class GameSurface(context: Context?) : SurfaceView(context), SurfaceHolder.Callback{
     // ball coordinates
@@ -23,6 +23,7 @@ class GameSurface(context: Context?) : SurfaceView(context), SurfaceHolder.Callb
     var picWidth : Int = 0
 
     var icon: Bitmap?= null
+    var icons: List<Bitmap>?=null
 
     // window size
     var Windowwidth : Int = 0
@@ -51,7 +52,11 @@ class GameSurface(context: Context?) : SurfaceView(context), SurfaceHolder.Callb
         display.getSize(size)
         Windowwidth = size.x
         Windowheight = size.y
-        icon = BitmapFactory.decodeResource(resources,R.drawable.ball)
+        icon = BitmapFactory.decodeResource(resources,R.drawable.meatball_01)
+        icons = listOf<Bitmap>(BitmapFactory.decodeResource(resources,R.drawable.meatball_01),
+            BitmapFactory.decodeResource(resources,R.drawable.meatball_02),
+            BitmapFactory.decodeResource(resources,R.drawable.meatball_03),
+            BitmapFactory.decodeResource(resources,R.drawable.meatball_04))
         picHeight = icon!!.height
         picWidth = icon!!.width
         //vibratorService = (getContext().getSystemService(Service.VIBRATOR_SERVICE)) as Vibrator
@@ -98,17 +103,28 @@ class GameSurface(context: Context?) : SurfaceView(context), SurfaceHolder.Callb
     override fun draw(canvas: Canvas?) {
         super.draw(canvas)
         if (canvas != null){
-            canvas.drawColor(0xFFAAAAA)
+            //Log.i("draw", "Called draw!")
+            canvas.drawColor(Color.WHITE)
             canvas.drawBitmap(icon,cx,cy,null)
+            //canvas.drawBitmap(icons!!.shuffled().take(1)[0], cx, cy, null)
         }
     }
 
     override public fun onDraw(canvas: Canvas?) {
 
         if (canvas != null){
-            canvas.drawColor(0xFFAAAAA)
+            //Log.i("onDraw", "Called onDraw!")
+            canvas.drawColor(Color.WHITE) // TODO why does setting the color to 0xFFAAAAAA just produce a black background? I tried some other hex colors too with the same result.
             canvas.drawBitmap(icon,cx,cy,null)
+            //canvas.drawBitmap(icons!!.shuffled().take(1)[0], cx, cy, null)
         }
+    }
+
+    fun diff(x:Float, y: Float, x2:Float, y2:Float) : Float {
+        val two : Int = 2
+        val delX : Float = x - x2
+        val delY : Float = y - y2
+        return sqrt( delX.pow(two) + delY.pow( two ) )
     }
 
     /**
@@ -119,8 +135,13 @@ class GameSurface(context: Context?) : SurfaceView(context), SurfaceHolder.Callb
      * Could be an accelerometer (hardware) bug, could be android os, could be my code.
      */
     fun updateMe(inx : Float , iny : Float){
+        val oldCx = cx
+        val oldCy = cy
+        var thresh = 0.5
         cx += inx
         cy += iny
+        if( diff(oldCx, oldCy, cx, cy) > thresh)
+            icon = icons!!.shuffled().take(1)[0] // TODO shuffle() or iterate through a list of pngs?
         if(cx > gameWidth ){
             cx = gameWidth.toFloat()
             if (onBorderX){
