@@ -5,13 +5,12 @@ import android.util.Log
 import android.view.SurfaceHolder
 
 class DrawThread (surfaceHolder: SurfaceHolder, panel : GameSurface) : Thread() {
-    private var TAG = "DrawThread"
     private var surfaceHolder : SurfaceHolder?= null
     private var panel : GameSurface ?= null
     private var run = false
 
     init {
-        Log.i("DrawThead", "In DrawThread() constructor")
+        Log.i(Constants.TAG, "In DrawThread() constructor")
         this.surfaceHolder = surfaceHolder
         this.panel = panel
     }
@@ -33,8 +32,8 @@ class DrawThread (surfaceHolder: SurfaceHolder, panel : GameSurface) : Thread() 
                     surfaceHolder!!.unlockCanvasAndPost(c)
                 }
             }catch(e: Exception){
-                Log.i(TAG, "Caught " + e.message)
-                Log.i(TAG, "Exiting draw thread!")
+                Log.i(Constants.TAG, "Caught " + e.message)
+                Log.i(Constants.TAG, "Exiting draw thread!")
                 return;
             }
         }

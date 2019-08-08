@@ -13,11 +13,9 @@ import android.view.WindowManager
  class MeatballActivity : AppCompatActivity() {
 
     var gameSurface : GameSurface ?= null
-    val TAG = "MeatballActivity"
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.i(TAG, "onCreate() Meatball Activity");
+        Log.i(Constants.TAG, "onCreate() Meatball Activity");
 
         super.onCreate(savedInstanceState)
 
@@ -29,31 +27,46 @@ import android.view.WindowManager
 
         gameSurface = GameSurface(this)
 
-        setContentView(R.layout.activity_meatball)
+        //setContentView(R.layout.activity_meatball)
         setContentView(gameSurface)
      }
 
-     override fun onPause() {
-         Log.i("GameSurface", "onPause")
-         super.onPause()
+     /*override fun onResume(){
+         Log.i(Constants.TAG, "onResume() Meatball Activity!")
+         super.onResume()
+         gameSurface?.destroySurface()
          gameSurface = null
+         gameSurface = GameSurface(this)
+         setContentView(gameSurface)
+     }*/
+
+     override fun onPause() {
+         Log.i(Constants.TAG, "onPause")
+         super.onPause()
+         gameSurface?.destroySurface()
+         gameSurface = null
+         finish()
      }
 
      override fun onDestroy() {
-         Log.i("GameSurface", "onDestroy")
+         Log.i(Constants.TAG, "onDestroy")
          super.onDestroy()
+         gameSurface?.destroySurface()
          gameSurface = null
+         finish()
      }
 
 
      override fun onBackPressed() {
          super.onBackPressed()
-         Log.i(TAG, "Back button pressed!")
+         Log.i(Constants.TAG, "Back button pressed!")
          try {
              gameSurface?.destroySurface()
+             gameSurface = null
+             finish()
          }
          catch(e: Exception){
-             Log.i(TAG, "failed to join thread!")
+             Log.i(Constants.TAG, "failed to join thread!")
          }
      }
  }

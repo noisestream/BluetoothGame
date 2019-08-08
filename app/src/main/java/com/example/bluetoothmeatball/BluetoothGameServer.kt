@@ -27,8 +27,6 @@ import java.util.*
  * @todo maybe move the companion object stuff out to GameGlobals.kt
  */
 class BluetoothGameServer(gameSurface: GameSurface) {
-    private val TAG = "BluetoothGameServer"
-
     private val NAME = "BluetoothGame"
 
     private val weakRef = WeakReference<BluetoothGameServer>(this)
@@ -74,7 +72,7 @@ class BluetoothGameServer(gameSurface: GameSurface) {
     }
 
     @Synchronized fun start(){
-        Log.i(TAG, "Starting BluetoothGameService")
+        Log.i(Constants.TAG, "Starting BluetoothGameService")
 
         if( connectedThread != null ){
             connectedThread?.cancel() // TODO Warning! Throughout here I use the ? to make android studio shoosh. But what if the thread is null?
@@ -82,12 +80,12 @@ class BluetoothGameServer(gameSurface: GameSurface) {
         }
 
         if( acceptThread == null ){
-            Log.e(TAG, "Accept thread was null")
+            Log.e(Constants.TAG, "Accept thread was null")
             acceptThread = AcceptThread()
             if( acceptThread == null )
-                Log.e(TAG, "Accept Thread still null")
+                Log.e(Constants.TAG, "Accept Thread still null")
             else
-                Log.e(TAG, "Accept thread no longer null")
+                Log.e(Constants.TAG, "Accept thread no longer null")
             acceptThread?.start()
         }
         updateUserInterfaceTitle()
@@ -117,6 +115,7 @@ class BluetoothGameServer(gameSurface: GameSurface) {
     }
 
     @Synchronized fun stop(){
+        Log.i(Constants.TAG, "Stopping bluetooth server.")
         if ( connectedThread != null ){
             connectedThread?.cancel()
             connectedThread = null
@@ -133,7 +132,7 @@ class BluetoothGameServer(gameSurface: GameSurface) {
         var r : ConnectedThread? // TODO = null here says is redundant
         synchronized(this){
             if( mState != STATE_CONNECTED ) {
-                //Log.i(TAG, "Cant write data - socket disconnected.")
+                //Log.i(Constants.TAG, "Cant write data - socket disconnected.")
                 return
             }
             r = connectedThread
@@ -143,7 +142,7 @@ class BluetoothGameServer(gameSurface: GameSurface) {
     }
 
     private fun connectionFailed(){
-        Log.i(TAG, "Connection Failed!")
+        Log.i(Constants.TAG, "Connection Failed!")
         val msg = handler?.obtainMessage(GameGlobals.MESSAGE_TOAST)
         val bundle = Bundle()
         bundle.putString(GameGlobals.TOAST, "Unable to connect device")
@@ -152,7 +151,6 @@ class BluetoothGameServer(gameSurface: GameSurface) {
 
         mState = STATE_NONE
         updateUserInterfaceTitle()
-        //BluetoothGameService.this.start() // TODO probably just say "this"
         this.start()
     }
 
@@ -176,7 +174,7 @@ class BluetoothGameServer(gameSurface: GameSurface) {
 
         // TODO what is the difference between a secure and an insecure socket?
         init{
-            Log.e(TAG, "Constructing acceptThread")
+            Log.e(Constants.TAG, "Constructing acceptThread")
             var tmp: BluetoothServerSocket? = null
 
             try{
@@ -184,17 +182,17 @@ class BluetoothGameServer(gameSurface: GameSurface) {
                 tmp = adapter?.listenUsingInsecureRfcommWithServiceRecord(NAME, GameUUID)
             }
             catch( e: IOException ){
-                Log.e(TAG, "Socket listen() failed", e)
+                Log.e(Constants.TAG, "Socket listen() failed", e)
                 // TODO serverSocket might be null here!
             }
-            Log.i(TAG, "nonnull socket for  GameUUID!")
+            Log.i(Constants.TAG, "nonnull socket for  GameUUID!")
             serverSocket = tmp
             mState = STATE_LISTEN
         }
 
         // TODO needs override keyword?
         override fun run(){
-            Log.e(TAG, "Starting run() in accept thread")
+            Log.e(Constants.TAG, "Starting run() in accept thread")
             setName("Accept Thread")
             var localSocket: BluetoothSocket? = null
             while ( mState != STATE_CONNECTED ){
@@ -202,7 +200,7 @@ class BluetoothGameServer(gameSurface: GameSurface) {
                     localSocket = serverSocket?.accept() // TODO check if socket is null?
                 }
                 catch( e: IOException){
-                    Log.e(TAG, "Socket accept() failed!", e)
+                    Log.e(Constants.TAG, "Socket accept() failed!", e)
                     break
                 }
 
@@ -216,24 +214,24 @@ class BluetoothGameServer(gameSurface: GameSurface) {
                                     localSocket.close()
                                 }
                                 catch( e: IOException ){
-                                    Log.e(TAG, "Could not close unwanted socket")
+                                    Log.e(Constants.TAG, "Could not close unwanted socket")
                                 }
-                            else -> Log.e(TAG, "Error, you shouldnt be here!")
+                            else -> Log.e(Constants.TAG, "Error, you shouldnt be here!")
                         }
 
                     }
                 }
             }
-            Log.e(TAG,"End of acceptThread")
+            Log.e(Constants.TAG,"End of acceptThread")
         }
 
         fun cancel(){
-            Log.e(TAG, "cancel socket")
+            Log.e(Constants.TAG, "cancel socket")
             try{
                 serverSocket?.close()
             }
             catch(e: IOException){
-                Log.e(TAG, "server socket close() failed")
+                Log.e(Constants.TAG, "server socket close() failed")
             }
         }
     }
@@ -244,7 +242,7 @@ class BluetoothGameServer(gameSurface: GameSurface) {
         var localOutStream: OutputStream? = null
 
         init{
-            Log.e(TAG, "Create ConnectedThread")
+            Log.e(Constants.TAG, "Create ConnectedThread")
             localSocket = socket
             var tmpIn: InputStream? = null
             var tmpOut: OutputStream? = null
@@ -253,7 +251,7 @@ class BluetoothGameServer(gameSurface: GameSurface) {
                 tmpOut = socket?.getOutputStream() // TODO dont use getters! Use property access instead?
             }
             catch( e: IOException ){
-                Log.e(TAG, "Error getting socket streams")
+                Log.e(Constants.TAG, "Error getting socket streams")
             }
 
             localInStream = tmpIn
@@ -262,7 +260,7 @@ class BluetoothGameServer(gameSurface: GameSurface) {
         }
 
         override fun run(){
-            Log.e(TAG, "beginning connectedthread")
+            Log.e(Constants.TAG, "beginning connectedthread")
             // TODO make sure a float is 4 bytes in Kotlin.
             var buffer = ByteArray(java.lang.Float.BYTES * 2) // TODO here I differ from the sample code. The buffer is 1024 there, but I want to avoid buffering issues.
             var bytes = 0
@@ -275,7 +273,7 @@ class BluetoothGameServer(gameSurface: GameSurface) {
                     handler?.obtainMessage(GameGlobals.MESSAGE_READ, bytes, -1, buffer)?.sendToTarget()
                 }
                 catch( e: IOException){
-                    Log.e(TAG, "disconnected!")
+                    Log.e(Constants.TAG, "disconnected!")
                     connectionLost()
                     break;
                 }
@@ -283,13 +281,13 @@ class BluetoothGameServer(gameSurface: GameSurface) {
         }
 
         fun write(buffer: ByteArray){
-            Log.e(TAG, "Entering BluetoothGameService.ConnectedThread.write()")
+            Log.e(Constants.TAG, "Entering BluetoothGameService.ConnectedThread.write()")
             try{
                 localOutStream?.write(buffer)
                 handler?.obtainMessage(GameGlobals.MESSAGE_WRITE, -1, -1, buffer)?.sendToTarget()
             }
             catch( e: IOException){
-                Log.e(TAG, "Error during write() in conencted thread")
+                Log.e(Constants.TAG, "Error during write() in conencted thread")
             }
         }
 
@@ -298,7 +296,7 @@ class BluetoothGameServer(gameSurface: GameSurface) {
                 localSocket?.close()
             }
             catch( e: IOException){
-                Log.e(TAG, "close() of connection socket failed!")
+                Log.e(Constants.TAG, "close() of connection socket failed!")
             }
         }
     }

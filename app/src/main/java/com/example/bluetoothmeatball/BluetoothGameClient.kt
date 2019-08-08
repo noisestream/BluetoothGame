@@ -27,7 +27,6 @@ import java.util.*
  * @todo maybe move the companion object stuff out to GameGlobals.kt
  */
 class BluetoothGameClient() {
-    val TAG = "BluetoothGameClient"
     val NAME = "BluetoothGame"
     private val weakRef = WeakReference<BluetoothGameClient>(this)
     private val handler = BTMsgHandler(weakRef)
@@ -46,31 +45,15 @@ class BluetoothGameClient() {
     var connectThread: ConnectThread? = null
     var connectedThread: ConnectedThread? = null
     private var mState: Int = STATE_NONE // if this is not private I get a 'platform declaration clash error'
-    var newState: Int = STATE_NONE
 
     init {
         adapter = BluetoothAdapter.getDefaultAdapter()
         mState = STATE_NONE
-        newState = mState
     }
 
-    @Synchronized
-    fun updateUserInterfaceTitle() {
-        mState = getState()
-        newState = mState
-        handler.obtainMessage(GameGlobals.MESSAGE_STATE_CHANGE, newState, -1)?.sendToTarget()
-    }
-
-
-    /**
-     * This method is stupid. No need for this I dont think, just make mState a public member.
-     */
-    @Synchronized fun getState() :Int {
-        return mState
-    }
 
     @Synchronized fun start(){
-        Log.i(TAG, "Starting BluetoothGameService")
+        Log.i(Constants.TAG, "Starting BluetoothGameService")
         if( connectThread != null ){
             connectThread?.cancel()
             connectThread = null
@@ -80,12 +63,10 @@ class BluetoothGameClient() {
             connectedThread?.cancel() // TODO Warning! Throughout here I use the ? to make android studio shoosh. But what if the thread is null?
             connectedThread = null
         }
-
-        updateUserInterfaceTitle()
     }
 
     @Synchronized fun connect(device: BluetoothDevice ){
-        Log.i(TAG, "Attempting to connect BluetoothGameService to " + device.name )
+        Log.i(Constants.TAG, "Attempting to connect BluetoothGameService to " + device.name )
         if( mState == STATE_CONNECTING){
             if( connectThread != null ){
                 connectThread?.cancel()
@@ -100,7 +81,6 @@ class BluetoothGameClient() {
 
         connectThread = ConnectThread( device )
         connectThread?.start()
-        updateUserInterfaceTitle()
     }
 
     @Synchronized fun connected( socket: BluetoothSocket?, device: BluetoothDevice?){
@@ -116,13 +96,6 @@ class BluetoothGameClient() {
 
         connectedThread = ConnectedThread( socket )
         connectedThread?.start()
-
-        val msg = handler.obtainMessage( GameGlobals.MESSAGE_DEVICE_NAME )
-        val bundle = Bundle()
-        bundle.putString(GameGlobals.DEVICE_NAME, device?.getName())
-        msg?.setData(bundle)
-        handler.sendMessage(msg)
-        updateUserInterfaceTitle()
     }
 
     @Synchronized fun stop(){
@@ -135,15 +108,13 @@ class BluetoothGameClient() {
             connectedThread = null
         }
         mState = STATE_NONE
-        updateUserInterfaceTitle()
     }
 
     fun write( out : ByteArray ){
         var r : ConnectedThread? // TODO = null here says is redundant
         synchronized(this){
             if( mState != STATE_CONNECTED ) {
-                //Log.i(TAG, "Cant write data - socket disconnected.")
-                return
+                return // TODO better error handling
             }
             r = connectedThread
         }
@@ -152,27 +123,13 @@ class BluetoothGameClient() {
     }
 
     private fun connectionFailed(){
-        Log.i(TAG, "Connection Failed!")
-        val msg = handler.obtainMessage(GameGlobals.MESSAGE_TOAST)
-        val bundle = Bundle()
-        bundle.putString(GameGlobals.TOAST, "Unable to connect device")
-        msg?.setData(bundle) //TODO could probable say msg.data =
-        handler.sendMessage(msg)
-
+        Log.i(Constants.TAG, "Connection Failed!")
         mState = STATE_NONE
-        updateUserInterfaceTitle()
-        //BluetoothGameService.this.start() // TODO probably just say "this"
         this.start()
     }
 
     private fun connectionLost(){
-        val msg = handler.obtainMessage(GameGlobals.MESSAGE_TOAST)
-        val bundle = Bundle()
-        bundle.putString(GameGlobals.TOAST, "Device Connection Lost")
-        msg?.setData(bundle)
-        handler.sendMessage(msg)
         mState = STATE_NONE
-        updateUserInterfaceTitle()
 
         // TODO not sure if this is okay
         this.start() // BluetoothGameService.this.start()
@@ -192,16 +149,16 @@ class BluetoothGameClient() {
                 tmp = localDevice?.createInsecureRfcommSocketToServiceRecord(GameUUID)
             }
             catch(e: IOException){
-                Log.e(TAG, "Error in ConnectThread.create()")
+                Log.e(Constants.TAG, "Error in ConnectThread.create()")
             }
             localSocket = tmp
             if ( localSocket == null )
-                Log.e( TAG, "NULL local socket!!!")
+                Log.e( Constants.TAG, "NULL local socket!!!")
             mState = STATE_CONNECTING
         }
 
         override fun run(){
-            Log.i(TAG, "BEGIN ConnectThread()")
+            Log.i(Constants.TAG, "BEGIN ConnectThread()")
             setName("ConnectThread")
 
             // TODO adapter could be null here!
@@ -215,7 +172,7 @@ class BluetoothGameClient() {
                     localSocket?.close()
                 }
                 catch( e2: IOException){
-                    Log.e(TAG, "Unable to close() socket. Error during connection")
+                    Log.e(Constants.TAG, "Unable to close() socket. Error during connection")
                 }
                 connectionFailed()
                 return
@@ -234,7 +191,7 @@ class BluetoothGameClient() {
                 localSocket?.close()
             }
             catch( e: IOException){
-                Log.e(TAG, "Unable to close() socket in cancel()")
+                Log.e(Constants.TAG, "Unable to close() socket in cancel()")
             }
         }
     }
@@ -245,7 +202,7 @@ class BluetoothGameClient() {
         var localOutStream: OutputStream? = null
 
         init{
-            Log.e(TAG, "Create ConnectedThread")
+            Log.e(Constants.TAG, "Create ConnectedThread")
             localSocket = socket
             var tmpIn: InputStream? = null
             var tmpOut: OutputStream? = null
@@ -254,7 +211,7 @@ class BluetoothGameClient() {
                 tmpOut = socket?.getOutputStream() // TODO dont use getters! Use property access instead?
             }
             catch( e: IOException ){
-                Log.e(TAG, "Error getting socket streams")
+                Log.e(Constants.TAG, "Error getting socket streams")
             }
 
             localInStream = tmpIn
@@ -263,7 +220,7 @@ class BluetoothGameClient() {
         }
 
         override fun run(){
-            Log.e(TAG, "beginning connectedthread")
+            Log.e(Constants.TAG, "beginning connectedthread")
             val VibrationMessageSize = 1
             val VibrationMessage : Byte = 0x01
             val buffer = ByteArray(VibrationMessageSize) // TODO here I differ from the sample code. The buffer is 1024 there, but I want to avoid buffering issues.
@@ -271,29 +228,11 @@ class BluetoothGameClient() {
 
             while(mState == STATE_CONNECTED){
                 try{
-                    //bytes = localInStream?.read(buffer)
-                    bytes = localInStream?.read(buffer)!! // TODO what is going on here with the !!
-                    /*
-                    if(buffer[0] == VibrationMessage){
-                        //var v = getSystemService(Context.VIBRATOR_SERVICE)
-                        //TODO Vibrate.
-                        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-                            var vibe:Vibrator = myContext?.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                            var effect: VibrationEffect = VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
-                            vibe.vibrate(effect)
-                        }
-                        else{
-                            var vibe:Vibrator = myContext?.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                            vibe.vibrate(500)
-                        }
-
-                    }
-                    */
-                    // TODO about the aforementioned !! ->  https://discuss.kotlinlang.org/t/automatic-coercion-from-nullable-to-non-null/543
+                    bytes = localInStream?.read(buffer)!!
                     handler?.obtainMessage(GameGlobals.MESSAGE_READ, bytes, -1, buffer)?.sendToTarget()
                 }
                 catch( e: IOException){
-                    Log.e(TAG, "disconnected!")
+                    Log.e(Constants.TAG, "disconnected!")
                     connectionLost()
                     break;
                 }
@@ -301,13 +240,13 @@ class BluetoothGameClient() {
         }
 
         fun write(buffer: ByteArray){
-            Log.e(TAG, "Entering BluetoothGameService.ConnectedThread.write()")
+           //Log.e(Constants.TAG, "Entering BluetoothGameService.ConnectedThread.write()")
             try{
                 localOutStream?.write(buffer)
-                handler?.obtainMessage(GameGlobals.MESSAGE_WRITE, -1, -1, buffer)?.sendToTarget()
+                //handler?.obtainMessage(GameGlobals.MESSAGE_WRITE, -1, -1, buffer)?.sendToTarget()
             }
             catch( e: IOException){
-                Log.e(TAG, "Error during write() in conencted thread")
+                Log.e(Constants.TAG, "Error during write() in connected thread")
             }
         }
 
@@ -316,7 +255,7 @@ class BluetoothGameClient() {
                 localSocket?.close()
             }
             catch( e: IOException){
-                Log.e(TAG, "close() of connection socket failed!")
+                Log.e(Constants.TAG, "close() of connection socket failed!")
             }
         }
     }
@@ -325,7 +264,7 @@ class BluetoothGameClient() {
         override fun handleMessage(msg: Message?) {
             when( msg?.what ){
                 GameGlobals.MESSAGE_WRITE-> {
-                    Log.i(outerclass.get()?.TAG,"Write")
+                    //Log.i(Constants.TAG,"Write")
                 }
                 else -> {
                     val pass: Unit = Unit

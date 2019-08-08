@@ -7,16 +7,16 @@
               android:orientation="vertical"
               tools:context=".DriverActivity">
     <Button
-        android:layout_width="300dp"
-        android:layout_height="wrap_content"
-        android:id="@+id/btnGet"
-        android:text="Choose Your Meatball"
-        android:layout_marginTop="150dp"
-        android:layout_marginBottom="10dp"
-        android:paddingRight="25dp"
-        android:paddingLeft="25dp"
-        android:onClick="updatePairedDeviceList" android:background="@android:color/holo_red_dark"
-        android:fontFamily="monospace" android:textSize="14sp" android:textStyle="bold"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/btnGet"
+            android:text="Find A Meatball"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:paddingRight="25dp"
+            android:paddingLeft="25dp"
+            android:onClick="updatePairedDeviceList" android:background="@android:color/holo_red_dark"
+            android:fontFamily="monospace" android:textSize="14sp" android:textStyle="bold"
     />
     <ListView
         android:id="@+id/textView"
@@ -25,4 +25,17 @@
         android:fadeScrollbars="false"
         android:clickable="true">
     </ListView>
+
+    <TextView
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:paddingVertical="10dp"
+            android:text="Click 'Find A Meatball', scroll through the list, and choose a paired device."
+            android:gravity="center_horizontal"
+            android:fontFamily="monospace"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:id="@+id/textView2"/>
 </LinearLayout>

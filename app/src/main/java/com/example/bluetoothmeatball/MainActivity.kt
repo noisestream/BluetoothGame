@@ -10,7 +10,6 @@ import android.view.WindowManager
 import android.widget.Button
 
 class MainActivity : AppCompatActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -25,7 +24,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume(){
         super.onResume()
-        Log.i("MainActivity", "onResume")
+        Log.i(Constants.TAG, "onResume")
     }
 
     fun chooseDriver( view: View) {
@@ -34,7 +33,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun chooseMeatball(view: View) {
-        Log.i("MainActivity", "chooseMeatball!")
+        Log.i(Constants.TAG, "chooseMeatball!")
         val meatballIntent = Intent( this, MeatballActivity::class.java)
         meatballIntent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
         startActivity( meatballIntent )

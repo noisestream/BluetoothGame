@@ -40,9 +40,6 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
     var yEvent : Float = 0.0f
     var zEvent : Float = 0.0f
 
-    val TAG = "DriverActivity"
-
-
     var service : BluetoothGameClient? = null
 
     /**
@@ -50,12 +47,9 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-
+        service = BluetoothGameClient() // prob need a reference to this so that we can vibrate  the context. TODO
         setContentView(R.layout.activity_driver)
 
-        service = BluetoothGameClient() // prob need a reference to this so that we can vibrate  the context. TODO
-        service?.start()
 
         mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         // focus in accelerometer
@@ -81,7 +75,7 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
     override fun onSensorChanged(event: SensorEvent?) {
         eventCount++
         if ((event != null) && (eventCount == 1)){
-            //Log.i(TAG, "Sensor changed!")
+            //Log.i(Constants.TAG, "Sensor changed!")
             eventCount=0
             // When there is a sensor event, send out the data over bluetooth.
             //ground!!.updateMe(event.values[1] , event.values[0])
@@ -89,7 +83,7 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
                 xEvent = -1 * event.values[0]
                 yEvent = event.values[1]
                 zEvent = event.values[2]
-                //Log.i(TAG,xEvent.toString() + " " + yEvent.toString() )
+                //Log.i(Constants.TAG,xEvent.toString() + " " + yEvent.toString() )
                 val shortX = java.lang.Float.floatToIntBits(xEvent)
                 val xBytes = ByteBuffer.allocate(java.lang.Float.BYTES).putInt(shortX)
                 val shortY = java.lang.Float.floatToIntBits(yEvent)
@@ -104,16 +98,20 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
         super.onResume()
         mSensorManager!!.registerListener(this,mAccelerometer,
             SensorManager.SENSOR_DELAY_GAME)
+        service?.start()
+
+
     }
 
     override fun onPause() {
         super.onPause()
         mSensorManager!!.unregisterListener(this)
+        service?.stop()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.i(TAG, "onDestroy()")
+        Log.i(Constants.TAG, "onDestroy()")
     }
 
     /**
@@ -136,19 +134,19 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
         listView.onItemClickListener = AdapterView.OnItemClickListener { adapterView, _ , index, _ ->
             val iter = pairedDevices?.iterator()
             iter?.forEach {
-                Log.i(TAG, it.address)
+                Log.i(Constants.TAG, it.address)
             }
 
             val toConnect = pairedDevices?.elementAt(index)
 
             if( toConnect != null) {
-                Log.i(TAG, "Trying to connect a device!")
+                Log.i(Constants.TAG, "Trying to connect a device!")
                 try {
                     service?.connect(toConnect)
                     //TODO navigate to the connected screen.
                 }
                 catch(e: Exception){
-                    Log.e(TAG, "Error during connect in DriverActivity")
+                    Log.e(Constants.TAG, "Error during connect in DriverActivity")
                 }
             }
 

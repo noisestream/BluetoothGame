@@ -14,8 +14,6 @@ import android.view.SurfaceView
 import android.view.WindowManager
 
 class GameSurface(context: Context?) : SurfaceView(context), SurfaceHolder.Callback{
-    private val TAG = "GameSurface"
-
     // ball coordinates
     var cx : Float = 0.toFloat()
     var cy : Float = 0.toFloat()
@@ -71,7 +69,7 @@ class GameSurface(context: Context?) : SurfaceView(context), SurfaceHolder.Callb
     fun destroySurface()
     {
         holder?.removeCallback(this)
-        Log.i(TAG, "Starting surrfaceDestroyed...")
+        Log.i(Constants.TAG, "Starting surfaceDestroyed...")
         var retry = true
         while ( retry ){
             try{
@@ -84,12 +82,13 @@ class GameSurface(context: Context?) : SurfaceView(context), SurfaceHolder.Callb
             }
         }
         btServer?.stop()
-        Log.i(TAG, "surface destroyed!")
+        btServer = null
+        Log.i(Constants.TAG, "surface destroyed!")
     }
 
 
     override fun surfaceCreated(holder: SurfaceHolder?) {
-        Log.i(TAG,"surfaceCreated")
+        Log.i(Constants.TAG,"surfaceCreated")
         drawThread!!.setRunning(true)
         drawThread!!.start()
 
