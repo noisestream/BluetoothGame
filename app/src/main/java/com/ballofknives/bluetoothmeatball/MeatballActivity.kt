@@ -1,9 +1,9 @@
- package com.example.bluetoothmeatball
+ package com.ballofknives.bluetoothmeatball
 
 import android.content.pm.ActivityInfo
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
+//import android.util.Log
 import android.view.WindowManager
 
  /**
@@ -15,7 +15,7 @@ import android.view.WindowManager
     var gameSurface : GameSurface ?= null
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.i(Constants.TAG, "onCreate() Meatball Activity");
+        //Log.i(Constants.TAG, "onCreate() Meatball Activity");
 
         super.onCreate(savedInstanceState)
 
@@ -41,7 +41,7 @@ import android.view.WindowManager
      }*/
 
      override fun onPause() {
-         Log.i(Constants.TAG, "onPause")
+         //Log.i(Constants.TAG, "onPause")
          super.onPause()
          gameSurface?.destroySurface()
          gameSurface = null
@@ -49,7 +49,7 @@ import android.view.WindowManager
      }
 
      override fun onDestroy() {
-         Log.i(Constants.TAG, "onDestroy")
+         //Log.i(Constants.TAG, "onDestroy")
          super.onDestroy()
          gameSurface?.destroySurface()
          gameSurface = null
@@ -59,14 +59,14 @@ import android.view.WindowManager
 
      override fun onBackPressed() {
          super.onBackPressed()
-         Log.i(Constants.TAG, "Back button pressed!")
+         //Log.i(Constants.TAG, "Back button pressed!")
          try {
              gameSurface?.destroySurface()
              gameSurface = null
              finish()
          }
          catch(e: Exception){
-             Log.i(Constants.TAG, "failed to join thread!")
+             //Log.i(Constants.TAG, "failed to join thread!")
          }
      }
  }

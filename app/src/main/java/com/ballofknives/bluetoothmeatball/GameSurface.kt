@@ -1,15 +1,12 @@
-package com.example.bluetoothmeatball
+package com.ballofknives.bluetoothmeatball
 
-import android.app.Service
 import android.content.Context
 import android.graphics.*
-import android.os.Vibrator
 import android.util.Log
 import android.view.Display
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.WindowManager
-import java.lang.Math.pow
 import kotlin.math.pow
 import kotlin.math.sqrt
 

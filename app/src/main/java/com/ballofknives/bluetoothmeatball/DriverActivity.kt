@@ -1,10 +1,7 @@
-package com.example.bluetoothmeatball
+package com.ballofknives.bluetoothmeatball
 
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothSocket
 import android.content.Context
-import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -12,20 +9,12 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Handler
-import android.os.Message
-import android.os.Vibrator
-import android.support.v4.app.ActivityCompat
-import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.ListView
-import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
 import java.nio.ByteBuffer
 
 /**
@@ -111,7 +100,7 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.i(Constants.TAG, "onDestroy()")
+        //Log.i(Constants.TAG, "onDestroy()")
     }
 
     /**
@@ -133,22 +122,22 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
         listView.adapter = arrayAdapter
         listView.onItemClickListener = AdapterView.OnItemClickListener { adapterView, _ , index, _ ->
             val iter = pairedDevices?.iterator()
-            iter?.forEach {
-                Log.i(Constants.TAG, it.address)
-            }
+            //iter?.forEach {
+             //   Log.i(Constants.TAG, it.address)
+            //}
 
             val toConnect = pairedDevices?.elementAt(index)
 
             if( toConnect != null) {
-                Log.i(Constants.TAG, "Trying to connect a device!")
+                //Log.i(Constants.TAG, "Trying to connect a device!")
                 try {
-                    Log.i(Constants.TAG, "Connecting")
+                    //Log.i(Constants.TAG, "Connecting")
                     Toast.makeText(this@DriverActivity, "Trying to connect.", Toast.LENGTH_SHORT).show()
                     service?.connect(toConnect)
                     //TODO navigate to the connected screen.
                 }
                 catch(e: Exception){
-                    Log.e(Constants.TAG, "Error during connect in DriverActivity")
+                    //Log.e(Constants.TAG, "Error during connect in DriverActivity")
                 }
             }
 

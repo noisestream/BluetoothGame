@@ -1,4 +1,4 @@
-package com.example.bluetoothmeatball
+package com.ballofknives.bluetoothmeatball
 
 import org.junit.Test
 

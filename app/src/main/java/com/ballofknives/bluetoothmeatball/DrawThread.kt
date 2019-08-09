@@ -1,7 +1,7 @@
-package com.example.bluetoothmeatball
+package com.ballofknives.bluetoothmeatball
 
 import android.graphics.Canvas
-import android.util.Log
+//import android.util.Log
 import android.view.SurfaceHolder
 
 class DrawThread (surfaceHolder: SurfaceHolder, panel : GameSurface) : Thread() {
@@ -10,7 +10,7 @@ class DrawThread (surfaceHolder: SurfaceHolder, panel : GameSurface) : Thread() 
     private var run = false
 
     init {
-        Log.i(Constants.TAG, "In DrawThread() constructor")
+        //Log.i(Constants.TAG, "In DrawThread() constructor")
         this.surfaceHolder = surfaceHolder
         this.panel = panel
     }
@@ -32,8 +32,8 @@ class DrawThread (surfaceHolder: SurfaceHolder, panel : GameSurface) : Thread() 
                     surfaceHolder!!.unlockCanvasAndPost(c)
                 }
             }catch(e: Exception){
-                Log.i(Constants.TAG, "Caught " + e.message)
-                Log.i(Constants.TAG, "Exiting draw thread!")
+                //Log.i(Constants.TAG, "Caught " + e.message)
+                //Log.i(Constants.TAG, "Exiting draw thread!")
                 return;
             }
         }

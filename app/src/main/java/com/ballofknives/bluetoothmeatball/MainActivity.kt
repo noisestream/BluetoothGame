@@ -1,13 +1,11 @@
-package com.example.bluetoothmeatball
+package com.ballofknives.bluetoothmeatball
 
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.WindowManager
-import android.widget.Button
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,7 +22,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume(){
         super.onResume()
-        Log.i(Constants.TAG, "onResume")
+        //Log.i(Constants.TAG, "onResume")
     }
 
     fun chooseDriver( view: View) {
@@ -33,7 +31,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun chooseMeatball(view: View) {
-        Log.i(Constants.TAG, "chooseMeatball!")
+        //Log.i(Constants.TAG, "chooseMeatball!")
         val meatballIntent = Intent( this, MeatballActivity::class.java)
         meatballIntent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
         startActivity( meatballIntent )

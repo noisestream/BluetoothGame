@@ -1,20 +1,14 @@
-package com.example.bluetoothmeatball
+package com.ballofknives.bluetoothmeatball
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
-import android.content.Context
-import android.content.Intent
 import android.os.*
-import android.support.v4.app.ActivityCompat.startActivityForResult
-import android.util.Log
-import android.widget.Toast
+//import android.util.Log
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.lang.ref.WeakReference
-import java.nio.ByteBuffer
 import java.util.*
 
 
@@ -52,7 +46,7 @@ class BluetoothGameClient() {
 
 
     @Synchronized fun start(){
-        Log.i(Constants.TAG, "Starting BluetoothGameService")
+        //Log.i(Constants.TAG, "Starting BluetoothGameService")
         if( connectThread != null ){
             connectThread?.cancel()
             connectThread = null
@@ -65,7 +59,7 @@ class BluetoothGameClient() {
     }
 
     @Synchronized fun connect(device: BluetoothDevice ){
-        Log.i(Constants.TAG, "Attempting to connect BluetoothGameService to " + device.name )
+        //Log.i(Constants.TAG, "Attempting to connect BluetoothGameService to " + device.name )
         if( mState == STATE_CONNECTING){
             if( connectThread != null ){
                 connectThread?.cancel()
@@ -122,7 +116,7 @@ class BluetoothGameClient() {
     }
 
     private fun connectionFailed(){
-        Log.i(Constants.TAG, "Connection Failed!")
+        //Log.i(Constants.TAG, "Connection Failed!")
         mState = STATE_NONE
         this.start()
     }
@@ -148,16 +142,16 @@ class BluetoothGameClient() {
                 tmp = localDevice?.createInsecureRfcommSocketToServiceRecord(GameUUID)
             }
             catch(e: IOException){
-                Log.e(Constants.TAG, "Error in ConnectThread.create()")
+                //Log.e(Constants.TAG, "Error in ConnectThread.create()")
             }
             localSocket = tmp
             if ( localSocket == null )
-                Log.e( Constants.TAG, "NULL local socket!!!")
+                //Log.e( Constants.TAG, "NULL local socket!!!")
             mState = STATE_CONNECTING
         }
 
         override fun run(){
-            Log.i(Constants.TAG, "BEGIN ConnectThread()")
+            //Log.i(Constants.TAG, "BEGIN ConnectThread()")
             setName("ConnectThread")
 
             // TODO adapter could be null here!
@@ -171,7 +165,7 @@ class BluetoothGameClient() {
                     localSocket?.close()
                 }
                 catch( e2: IOException){
-                    Log.e(Constants.TAG, "Unable to close() socket. Error during connection")
+                    //Log.e(Constants.TAG, "Unable to close() socket. Error during connection")
                 }
                 connectionFailed()
                 return
@@ -189,7 +183,7 @@ class BluetoothGameClient() {
                 localSocket?.close()
             }
             catch( e: IOException){
-                Log.e(Constants.TAG, "Unable to close() socket in cancel()")
+                //Log.e(Constants.TAG, "Unable to close() socket in cancel()")
             }
         }
     }
@@ -200,7 +194,7 @@ class BluetoothGameClient() {
         var localOutStream: OutputStream? = null
 
         init{
-            Log.e(Constants.TAG, "Create ConnectedThread")
+            //Log.e(Constants.TAG, "Create ConnectedThread")
             localSocket = socket
             var tmpIn: InputStream? = null
             var tmpOut: OutputStream? = null
@@ -209,7 +203,7 @@ class BluetoothGameClient() {
                 tmpOut = socket?.getOutputStream() // TODO dont use getters! Use property access instead?
             }
             catch( e: IOException ){
-                Log.e(Constants.TAG, "Error getting socket streams")
+                //Log.e(Constants.TAG, "Error getting socket streams")
             }
 
             localInStream = tmpIn
@@ -218,7 +212,7 @@ class BluetoothGameClient() {
         }
 
         override fun run(){
-            Log.e(Constants.TAG, "beginning connectedthread")
+            //Log.e(Constants.TAG, "beginning connectedthread")
             val VibrationMessageSize = 1
             val VibrationMessage : Byte = 0x01
             val buffer = ByteArray(VibrationMessageSize) // TODO here I differ from the sample code. The buffer is 1024 there, but I want to avoid buffering issues.
@@ -230,7 +224,7 @@ class BluetoothGameClient() {
                     handler?.obtainMessage(GameGlobals.MESSAGE_READ, bytes, -1, buffer)?.sendToTarget()
                 }
                 catch( e: IOException){
-                    Log.e(Constants.TAG, "disconnected!")
+                    //Log.e(Constants.TAG, "disconnected!")
                     connectionLost()
                     break;
                 }
@@ -238,13 +232,13 @@ class BluetoothGameClient() {
         }
 
         fun write(buffer: ByteArray){
-           //Log.e(Constants.TAG, "Entering BluetoothGameService.ConnectedThread.write()")
+           ////Log.e(Constants.TAG, "Entering BluetoothGameService.ConnectedThread.write()")
             try{
                 localOutStream?.write(buffer)
                 //handler?.obtainMessage(GameGlobals.MESSAGE_WRITE, -1, -1, buffer)?.sendToTarget()
             }
             catch( e: IOException){
-                Log.e(Constants.TAG, "Error during write() in connected thread")
+                //Log.e(Constants.TAG, "Error during write() in connected thread")
             }
         }
 
@@ -253,7 +247,7 @@ class BluetoothGameClient() {
                 localSocket?.close()
             }
             catch( e: IOException){
-                Log.e(Constants.TAG, "close() of connection socket failed!")
+                //Log.e(Constants.TAG, "close() of connection socket failed!")
             }
         }
     }
@@ -262,7 +256,7 @@ class BluetoothGameClient() {
         override fun handleMessage(msg: Message?) {
             when( msg?.what ){
                 GameGlobals.MESSAGE_WRITE-> {
-                    //Log.i(Constants.TAG,"Write")
+                    ////Log.i(Constants.TAG,"Write")
                 }
                 else -> {
                     val pass: Unit = Unit
