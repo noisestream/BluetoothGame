@@ -1,9 +1,15 @@
 package com.ballofknives.bluetoothmeatball
 
+import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothSocket
+import android.content.Context
+import android.content.pm.PackageManager
 import android.os.*
+import android.util.Log
+import androidx.core.app.ActivityCompat
 //import android.util.Log
 import java.io.IOException
 import java.io.InputStream
@@ -11,6 +17,8 @@ import java.io.OutputStream
 import java.lang.ref.WeakReference
 import java.util.*
 
+fun Context.bluetoothAdapter(): BluetoothAdapter? =
+    (this.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
 
 /**
  * BluetoothGameClient corresponds to the Meatball Driver. The Meatball is the server that is connected to by this
@@ -20,13 +28,11 @@ import java.util.*
  * @todo - would like the states to be an enum rather than ints.
  * @todo maybe move the companion object stuff out to GameGlobals.kt
  */
-class BluetoothGameClient() {
-    val NAME = "BluetoothGame"
-    private val weakRef = WeakReference<BluetoothGameClient>(this)
+class BluetoothGameClient(private val myContext: Context) {
+    private val weakRef = WeakReference(this)
     private val handler = BTMsgHandler(weakRef)
 
     companion object {
-        //val GameUUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
         val GameUUID: UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
 
         const val STATE_NONE: Int = 0
@@ -36,11 +42,11 @@ class BluetoothGameClient() {
     }
     var adapter: BluetoothAdapter? = null
     var connectThread: ConnectThread? = null
-    var connectedThread: ConnectedThread? = null
+    private var connectedThread: ConnectedThread? = null
     var mState: Int = STATE_NONE // if this is not private I get a 'platform declaration clash error'
 
     init {
-        adapter = BluetoothAdapter.getDefaultAdapter()
+        adapter = myContext.bluetoothAdapter()
         mState = STATE_NONE
     }
 
@@ -72,7 +78,7 @@ class BluetoothGameClient() {
             connectedThread = null
         }
 
-        connectThread = ConnectThread( device )
+        connectThread = ConnectThread( device, myContext)
         connectThread?.start()
     }
 
@@ -128,7 +134,7 @@ class BluetoothGameClient() {
         this.start() // BluetoothGameService.this.start()
     }
 
-    inner class ConnectThread(device: BluetoothDevice?): Thread(){
+    inner class ConnectThread(device: BluetoothDevice?, myContext: Context): Thread(){
         var localSocket : BluetoothSocket? = null
         var localDevice: BluetoothDevice? = null
 
@@ -139,26 +145,53 @@ class BluetoothGameClient() {
 
             try{
                 //tmp = localDevice?.createRfcommSocketToServiceRecord(GameUUID)
-                tmp = localDevice?.createInsecureRfcommSocketToServiceRecord(GameUUID)
+                if (ActivityCompat.checkSelfPermission(
+                        myContext,
+                        Manifest.permission.BLUETOOTH_CONNECT
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                }
+                else {
+                    tmp = localDevice?.createInsecureRfcommSocketToServiceRecord(GameUUID)
+                }
             }
             catch(e: IOException){
                 //Log.e(Constants.TAG, "Error in ConnectThread.create()")
             }
             localSocket = tmp
             if ( localSocket == null )
-                //Log.e( Constants.TAG, "NULL local socket!!!")
+                Log.e( Constants.TAG, "NULL local socket!!!")
             mState = STATE_CONNECTING
         }
 
+
         override fun run(){
-            //Log.i(Constants.TAG, "BEGIN ConnectThread()")
-            setName("ConnectThread")
-
-            // TODO adapter could be null here!
-            adapter?.cancelDiscovery()
-
+            name = "ConnectThread"
             try{
-                localSocket?.connect()
+                if (ActivityCompat.checkSelfPermission(
+                        myContext,
+                        Manifest.permission.BLUETOOTH_CONNECT
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return
+                }
+                else {
+                    localSocket?.connect()
+                }
             }
             catch(e: IOException){
                 try{

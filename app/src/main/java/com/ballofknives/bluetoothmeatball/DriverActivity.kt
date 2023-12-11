@@ -45,7 +45,7 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
     @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        service = BluetoothGameClient() // prob need a reference to this so that we can vibrate  the context. TODO
+        service = BluetoothGameClient(this) // prob need a reference to this so that we can vibrate  the context. TODO
         setContentView(R.layout.activity_driver)
 
 
@@ -63,7 +63,6 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             Log.i("permissions", Build.VERSION.SDK_INT.toString())
             requestMultiplePermissions.launch(arrayOf(
-                Manifest.permission.BLUETOOTH_SCAN,
                 Manifest.permission.BLUETOOTH_CONNECT))
         }
         else{
