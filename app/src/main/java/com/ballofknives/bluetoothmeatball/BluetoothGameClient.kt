@@ -253,8 +253,8 @@ class BluetoothGameClient() {
     }
 
     class BTMsgHandler(private val outerclass: WeakReference<BluetoothGameClient>): Handler() {
-        override fun handleMessage(msg: Message?) {
-            when( msg?.what ){
+        override fun handleMessage(msg: Message) {
+            when( msg.what ){
                 GameGlobals.MESSAGE_WRITE-> {
                     ////Log.i(Constants.TAG,"Write")
                 }

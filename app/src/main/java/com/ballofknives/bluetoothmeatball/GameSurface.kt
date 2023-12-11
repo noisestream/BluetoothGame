@@ -19,8 +19,8 @@ class GameSurface(context: Context?) : SurfaceView(context), SurfaceHolder.Callb
     var picHeight: Int = 0
     var picWidth : Int = 0
 
-    var icon: Bitmap?= null
-    var icons: List<Bitmap>?=null
+    private var icon: Bitmap
+    private var icons: List<Bitmap>
 
     // window size
     var Windowwidth : Int = 0
@@ -49,11 +49,11 @@ class GameSurface(context: Context?) : SurfaceView(context), SurfaceHolder.Callb
         display.getSize(size)
         Windowwidth = size.x
         Windowheight = size.y
-        icon = BitmapFactory.decodeResource(resources,R.drawable.meatball_01)
-        icons = listOf<Bitmap>(BitmapFactory.decodeResource(resources,R.drawable.meatball_01),
-            BitmapFactory.decodeResource(resources,R.drawable.meatball_02),
-            BitmapFactory.decodeResource(resources,R.drawable.meatball_03),
-            BitmapFactory.decodeResource(resources,R.drawable.meatball_04))
+        icon = BitmapFactory.decodeResource(resources,R.drawable.ball)
+        icons = listOf<Bitmap>(BitmapFactory.decodeResource(resources,R.drawable.ball),
+            BitmapFactory.decodeResource(resources,R.drawable.ball),
+            BitmapFactory.decodeResource(resources,R.drawable.ball),
+            BitmapFactory.decodeResource(resources,R.drawable.ball))
         picHeight = icon!!.height
         picWidth = icon!!.width
         //vibratorService = (getContext().getSystemService(Service.VIBRATOR_SERVICE)) as Vibrator
@@ -61,10 +61,10 @@ class GameSurface(context: Context?) : SurfaceView(context), SurfaceHolder.Callb
         gameHeight = Windowheight - picHeight // todo more appropriate name here than gameHeight
     }
 
-    override fun surfaceChanged(holder: SurfaceHolder?, format: Int, width: Int, height: Int) {
+    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
     }
 
-    override fun surfaceDestroyed(holder: SurfaceHolder?) {
+    override fun surfaceDestroyed(holder: SurfaceHolder) {
        destroySurface()
     }
 
@@ -89,7 +89,7 @@ class GameSurface(context: Context?) : SurfaceView(context), SurfaceHolder.Callb
     }
 
 
-    override fun surfaceCreated(holder: SurfaceHolder?) {
+    override fun surfaceCreated(holder: SurfaceHolder) {
         Log.i(Constants.TAG,"surfaceCreated")
         drawThread!!.setRunning(true)
         drawThread!!.start()
@@ -97,7 +97,7 @@ class GameSurface(context: Context?) : SurfaceView(context), SurfaceHolder.Callb
         btServer?.start()
     }
 
-    override fun draw(canvas: Canvas?) {
+    override fun draw(canvas: Canvas) {
         super.draw(canvas)
         if (canvas != null){
             //Log.i("draw", "Called draw!")
@@ -107,14 +107,12 @@ class GameSurface(context: Context?) : SurfaceView(context), SurfaceHolder.Callb
         }
     }
 
-    override public fun onDraw(canvas: Canvas?) {
+    override fun onDraw(canvas: Canvas) {
 
-        if (canvas != null){
-            //Log.i("onDraw", "Called onDraw!")
-            canvas.drawColor(Color.WHITE) // TODO why does setting the color to 0xFFAAAAAA just produce a black background? I tried some other hex colors too with the same result.
-            canvas.drawBitmap(icon,cx,cy,null)
-            //canvas.drawBitmap(icons!!.shuffled().take(1)[0], cx, cy, null)
-        }
+        //Log.i("onDraw", "Called onDraw!")
+        canvas.drawColor(Color.WHITE) // TODO why does setting the color to 0xFFAAAAAA just produce a black background? I tried some other hex colors too with the same result.
+        canvas.drawBitmap(icon,cx,cy,null)
+        //canvas.drawBitmap(icons!!.shuffled().take(1)[0], cx, cy, null)
     }
 
     fun diff(x:Float, y: Float, x2:Float, y2:Float) : Float {
@@ -178,6 +176,4 @@ class GameSurface(context: Context?) : SurfaceView(context), SurfaceHolder.Callb
 
         invalidate()
     }
-
-
 }

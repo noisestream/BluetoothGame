@@ -1,10 +1,11 @@
  package com.ballofknives.bluetoothmeatball
 
 import android.content.pm.ActivityInfo
-import android.support.v7.app.AppCompatActivity
+
 import android.os.Bundle
 //import android.util.Log
 import android.view.WindowManager
+import androidx.appcompat.app.AppCompatActivity
 
  /**
   * Reference used for this:

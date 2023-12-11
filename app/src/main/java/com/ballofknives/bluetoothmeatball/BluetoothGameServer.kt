@@ -1,12 +1,16 @@
 package com.ballofknives.bluetoothmeatball
 
+import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
+import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Bundle
 import android.os.Message
+import androidx.core.app.ActivityCompat
+
 //import android.util.Log
 import java.io.IOException
 import java.io.InputStream
@@ -87,7 +91,7 @@ class BluetoothGameServer(gameSurface: GameSurface) {
     }
 
 
-    @Synchronized fun connected( socket: BluetoothSocket?, device: BluetoothDevice?){
+    @Synchronized fun connected( socket: BluetoothSocket, device: BluetoothDevice){
         if( connectedThread != null){
             connectedThread?.cancel()
             connectedThread = null
@@ -101,9 +105,10 @@ class BluetoothGameServer(gameSurface: GameSurface) {
         connectedThread = ConnectedThread( socket )
         connectedThread?.start()
 
-        val msg = handler?.obtainMessage( GameGlobals.MESSAGE_DEVICE_NAME )
+        val msg = handler.obtainMessage( GameGlobals.MESSAGE_DEVICE_NAME )
         val bundle = Bundle()
-        bundle.putString(GameGlobals.DEVICE_NAME, device?.getName())
+
+        bundle.putString(GameGlobals.DEVICE_NAME, device.getName())
         msg?.setData(bundle)
         handler?.sendMessage(msg)
         updateUserInterfaceTitle()
@@ -137,11 +142,11 @@ class BluetoothGameServer(gameSurface: GameSurface) {
     }
 
     private fun connectionLost(){
-        val msg = handler?.obtainMessage(GameGlobals.MESSAGE_TOAST)
+        val msg = handler.obtainMessage(GameGlobals.MESSAGE_TOAST)
         val bundle = Bundle()
         bundle.putString(GameGlobals.TOAST, "Device Connection Lost")
-        msg?.setData(bundle)
-        handler?.sendMessage(msg)
+        msg.setData(bundle)
+        handler.sendMessage(msg)
         mState = STATE_NONE
         updateUserInterfaceTitle()
 
@@ -160,8 +165,7 @@ class BluetoothGameServer(gameSurface: GameSurface) {
             var tmp: BluetoothServerSocket? = null
 
             try{
-                //tmp = adapter?.listenUsingRfcommWithServiceRecord(NAME, GameUUID)
-                tmp = adapter?.listenUsingInsecureRfcommWithServiceRecord(NAME, GameUUID)
+                tmp = adapter!!.listenUsingInsecureRfcommWithServiceRecord(NAME, GameUUID)
             }
             catch( e: IOException ){
                 //Log.e(Constants.TAG, "Socket listen() failed", e)
@@ -285,9 +289,9 @@ class BluetoothGameServer(gameSurface: GameSurface) {
     }
 
     class BTMsgHandler(private val btGameServer: WeakReference<BluetoothGameServer>): Handler() {
-        override fun handleMessage(msg: Message?) {
+        override fun handleMessage(msg: Message) {
             // TODO what the hell is this@DriverActivity?? It was suggested to me by the IDE to eliminate the error.
-            when( msg?.what ){
+            when( msg.what ){
                 //GameGlobals.MESSAGE_WRITE -> {
                 //    val data = msg.obj as ByteArray
                 //    val xCoord = ByteBuffer.wrap(data).getFloat(0);

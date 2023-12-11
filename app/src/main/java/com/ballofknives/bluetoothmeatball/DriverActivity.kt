@@ -1,20 +1,28 @@
 package com.ballofknives.bluetoothmeatball
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.support.v7.app.AppCompatActivity
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.ListView
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import java.nio.ByteBuffer
 
 /**
@@ -25,15 +33,16 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
     private var mAccelerometer : Sensor?= null
     private var eventCount = 0
 
-    var xEvent : Float = 0.0f
-    var yEvent : Float = 0.0f
-    var zEvent : Float = 0.0f
+    private var xEvent : Float = 0.0f
+    private var yEvent : Float = 0.0f
+    private var zEvent : Float = 0.0f
 
-    var service : BluetoothGameClient? = null
+    private var service : BluetoothGameClient? = null
 
     /**
      * @todo Enable the bit of code for checking if the bluetooth adapter is on!
      */
+    @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         service = BluetoothGameClient() // prob need a reference to this so that we can vibrate  the context. TODO
@@ -43,13 +52,45 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
         mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         // focus in accelerometer
         mAccelerometer = mSensorManager!!.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+
         // setup the window
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-
         window.setFlags(
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
             WindowManager.LayoutParams.FLAG_FULLSCREEN)
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            Log.i("permissions", Build.VERSION.SDK_INT.toString())
+            requestMultiplePermissions.launch(arrayOf(
+                Manifest.permission.BLUETOOTH_SCAN,
+                Manifest.permission.BLUETOOTH_CONNECT))
+        }
+        else{
+            Log.i("permissions", Build.VERSION.SDK_INT.toString())
+            //val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+            //requestBluetooth.launch(enableBtIntent)
+        }
+
     }
+
+/*
+    private var requestBluetooth = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            //granted
+        }else{
+            //deny
+        }
+    }
+    */
+
+
+    private val requestMultiplePermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        permissions.entries.forEach {
+            Log.d("test006", "${it.key} = ${it.value}")
+        }
+    }
+
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
     }
@@ -113,11 +154,31 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
      *  @reference: http://android-er.blogspot.com/2014/12/list-paired-bluetooth-devices-and-read.html
      */
 
+    @RequiresApi(Build.VERSION_CODES.S)
     fun updatePairedDeviceList(view: View){
-        val pairedDevices: Set<BluetoothDevice>? = service?.adapter?.bondedDevices
+        Log.i("permissions", ActivityCompat.checkSelfPermission(
+            this,
+            Manifest.permission.BLUETOOTH_CONNECT
+        ).toString())
+        val pairedDevices: MutableSet<BluetoothDevice>? = if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.BLUETOOTH_CONNECT
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            //var service = service
+            //var adapter = service!!.adapter
+            //adapter!!.bondedDevices
+            HashSet<BluetoothDevice>()
+
+        }
+        else{
+            service!!.adapter!!.bondedDevices
+
+        }
+
         val pairedDeviceList : MutableList<BluetoothDevice>? = pairedDevices?.toMutableList()
-        val pairedDeviceNames = pairedDeviceList?.map{ device -> device.name + "-" + device.address }?.toMutableList()
-        val arrayAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, pairedDeviceNames )
+        val pairedDeviceNames : MutableList<String>? = pairedDeviceList?.map{ device : BluetoothDevice -> device.name + "-" + device.address }?.toMutableList()
+        val arrayAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, pairedDeviceNames!! )
         val listView = findViewById<ListView>(R.id.textView)
         listView.adapter = arrayAdapter
         listView.onItemClickListener = AdapterView.OnItemClickListener { adapterView, _ , index, _ ->
