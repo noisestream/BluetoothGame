@@ -3,6 +3,9 @@
     <string name="homescreen_preamble">This application is a proof of concept. You can use your phone\'s accelerometer and bluetooth adapter to create a moving ball animation on a remote device. Make sure you have paired the devices before proceeding.</string>
     <string name="choose_instruction">One device must be the meatball, while the other drives the meatball
         .:</string>
+    <string name="bluetooth_rationale_1">Granted the requested permissions allows the app to use the bluetooth functionality of your device.</string>
+    <string name="bluetooth_rationale_2">Please enable the requested permissions in Settings to allow the app to use bluetooth on your device.</string>
+    <string name="no_thanks">No thanks.</string>
     <string name="driver_button_text">Give Me The Wheel</string>
     <string name="meatball_button_text">Going For A Ride</string>
     <string name="logo_description">BluetoothMeatballLogo</string>

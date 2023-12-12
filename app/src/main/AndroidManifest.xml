@@ -9,14 +9,14 @@
     <!-- Request legacy Bluetooth permissions on older devices. -->
     <uses-permission android:name="android.permission.BLUETOOTH"
             android:maxSdkVersion="30" />
-    <!--
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
-            android:maxSdkVersion="30" />
-            -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"
             android:maxSdkVersion="30"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
+            android:maxSdkVersion="30"/>
+
+    <!-- Request new Android 12+ BLUETOOTH_CONNECT permission -->
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <!-- <uses-permission android:name="android.permission.BLUETOOTH_SCAN" /> --> <!-- Not needed. We dont scan for devices - we only connect to already paired devices -->
+
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <application

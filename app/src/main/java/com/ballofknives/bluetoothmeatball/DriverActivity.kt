@@ -4,15 +4,17 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
+import android.provider.Settings
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
@@ -20,7 +22,7 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import java.nio.ByteBuffer
@@ -38,6 +40,85 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
     private var zEvent : Float = 0.0f
 
     private var service : BluetoothGameClient? = null
+
+    private val persistentStorage = PersistentStorage(this)
+
+    private val bluetoothPermissionRequest =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){ map ->
+            val userAcknowledgement = map.values.all{ it -> it } // if all permissions are granted, then we can clear the acknowledgement flag.
+            if(userAcknowledgement) {
+                persistentStorage.userHasAcknowledgedBluetoothPermissionRationale = false
+            }
+        }
+
+    private fun isBluetoothPermissionGranted() : Boolean{
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT ) == PackageManager.PERMISSION_GRANTED
+        } else{
+            ((ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_GRANTED ) &&
+                    (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ))
+        }
+    }
+
+
+    private fun shouldShowBluetoothPermissionRationale(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            shouldShowRequestPermissionRationale(Manifest.permission.BLUETOOTH_CONNECT)
+        } else{
+            shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) || shouldShowRequestPermissionRationale(Manifest.permission.BLUETOOTH)
+        }
+
+    }
+
+    private fun userHasPreviouslyAcknowledgedBluetoothPermissionRationale(): Boolean {
+        return persistentStorage.userHasAcknowledgedBluetoothPermissionRationale
+    }
+
+    private fun requestBluetoothPermission(){
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val permissions = arrayOf(
+                Manifest.permission.BLUETOOTH_CONNECT
+            )
+            bluetoothPermissionRequest.launch(permissions)
+        }
+        else{
+            val permissions = arrayOf(
+                Manifest.permission.BLUETOOTH,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
+            bluetoothPermissionRequest.launch(permissions)
+        }
+    }
+
+    private fun showRationaleDialog(){
+        AlertDialog.Builder(this)
+            .setMessage(getString(R.string.bluetooth_rationale_1))
+            .setPositiveButton(getString(android.R.string.ok)) { _, _ ->
+                persistentStorage.userHasAcknowledgedBluetoothPermissionRationale = true
+                requestBluetoothPermission()
+            }
+            .show()
+    }
+
+    private fun showPreviouslyAcknowledgedRationaleDialog(){
+        AlertDialog.Builder(this)
+            .setMessage(getString(R.string.bluetooth_rationale_2))
+            .setNegativeButton(getString(R.string.no_thanks), null)
+            .setPositiveButton(getString(android.R.string.ok)) { _, _ -> showApplicationDetailsSettingsScreen() }
+            .show()
+    }
+
+    private fun showApplicationDetailsSettingsScreen() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            .setData(Uri.fromParts("package", packageName, null))
+
+        startActivity(intent)
+    }
+
+
+
 
     /**
      * @todo Enable the bit of code for checking if the bluetooth adapter is on!
@@ -59,36 +140,9 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
             WindowManager.LayoutParams.FLAG_FULLSCREEN)
 
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            Log.i("permissions", Build.VERSION.SDK_INT.toString())
-            requestMultiplePermissions.launch(arrayOf(
-                Manifest.permission.BLUETOOTH_CONNECT))
-        }
-        else{
-            Log.i("permissions", Build.VERSION.SDK_INT.toString())
-            //val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-            //requestBluetooth.launch(enableBtIntent)
-        }
-
+        //requestBluetoothPermissions()
     }
 
-/*
-    private var requestBluetooth = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            //granted
-        }else{
-            //deny
-        }
-    }
-    */
-
-
-    private val requestMultiplePermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-        permissions.entries.forEach {
-            Log.d("test006", "${it.key} = ${it.value}")
-        }
-    }
 
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
@@ -143,6 +197,23 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
         //Log.i(Constants.TAG, "onDestroy()")
     }
 
+    fun onUpdatePairedDeviceListClicked(view: View){
+        if(isBluetoothPermissionGranted()){
+            updatePairedDeviceList()
+        }
+        else{
+            if(shouldShowBluetoothPermissionRationale()){
+                showRationaleDialog()
+            }
+            else if(userHasPreviouslyAcknowledgedBluetoothPermissionRationale()){
+                showPreviouslyAcknowledgedRationaleDialog()
+            }
+            else{
+                requestBluetoothPermission()
+            }
+        }
+    }
+
     /**
      * Update ListView
      *
@@ -153,35 +224,19 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
      *  @reference: http://android-er.blogspot.com/2014/12/list-paired-bluetooth-devices-and-read.html
      */
 
-    @RequiresApi(Build.VERSION_CODES.S)
-    fun updatePairedDeviceList(view: View){
-        Log.i("permissions", ActivityCompat.checkSelfPermission(
-            this,
-            Manifest.permission.BLUETOOTH_CONNECT
-        ).toString())
-        val pairedDevices: MutableSet<BluetoothDevice>? = if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.BLUETOOTH_CONNECT
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            //var service = service
-            //var adapter = service!!.adapter
-            //adapter!!.bondedDevices
-            HashSet<BluetoothDevice>()
-
-        }
-        else{
-            service!!.adapter!!.bondedDevices
-
-        }
+    @SuppressLint("MissingPermission")
+    fun updatePairedDeviceList(){
+        val pairedDevices: MutableSet<BluetoothDevice>? = service?.adapter?.bondedDevices
 
         val pairedDeviceList : MutableList<BluetoothDevice>? = pairedDevices?.toMutableList()
         val pairedDeviceNames : MutableList<String>? = pairedDeviceList?.map{ device : BluetoothDevice -> device.name + "-" + device.address }?.toMutableList()
+        if (pairedDevices == null)
+            return
         val arrayAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, pairedDeviceNames!! )
         val listView = findViewById<ListView>(R.id.textView)
         listView.adapter = arrayAdapter
-        listView.onItemClickListener = AdapterView.OnItemClickListener { adapterView, _ , index, _ ->
-            val iter = pairedDevices?.iterator()
+        listView.onItemClickListener = AdapterView.OnItemClickListener { _, _, index, _ ->
+            val iter = pairedDevices.iterator()
             //iter?.forEach {
              //   Log.i(Constants.TAG, it.address)
             //}

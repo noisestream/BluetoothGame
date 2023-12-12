@@ -15,7 +15,7 @@
             android:layout_marginBottom="10dp"
             android:paddingRight="25dp"
             android:paddingLeft="25dp"
-            android:onClick="updatePairedDeviceList" android:background="@android:color/holo_red_dark"
+            android:onClick="onUpdatePairedDeviceListClicked" android:background="@android:color/holo_red_dark"
             android:fontFamily="monospace" android:textSize="14sp" android:textStyle="bold"
     />
     <ListView

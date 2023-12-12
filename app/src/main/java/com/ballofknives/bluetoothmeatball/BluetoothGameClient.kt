@@ -1,6 +1,7 @@
 package com.ballofknives.bluetoothmeatball
 
 import android.Manifest
+import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
@@ -20,13 +21,15 @@ import java.util.*
 fun Context.bluetoothAdapter(): BluetoothAdapter? =
     (this.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
 
+
+const val ANDROID_BELOW_S_REQUEST_PERMISSION = 0
+const val ANDROID_S_ABOVE_REQUEST_PERMISSION = 1
+
 /**
  * BluetoothGameClient corresponds to the Meatball Driver. The Meatball is the server that is connected to by this
  * client.
  *
- * @todo - just wanted static gameUUID - not sure how to do that so I put it in a companion object.
  * @todo - would like the states to be an enum rather than ints.
- * @todo maybe move the companion object stuff out to GameGlobals.kt
  */
 class BluetoothGameClient(private val myContext: Context) {
     private val weakRef = WeakReference(this)
@@ -59,7 +62,7 @@ class BluetoothGameClient(private val myContext: Context) {
         }
 
         if( connectedThread != null ){
-            connectedThread?.cancel() // TODO Warning! Throughout here I use the ? to make android studio shoosh. But what if the thread is null?
+            connectedThread?.cancel()
             connectedThread = null
         }
     }
@@ -134,62 +137,51 @@ class BluetoothGameClient(private val myContext: Context) {
         this.start() // BluetoothGameService.this.start()
     }
 
-    inner class ConnectThread(device: BluetoothDevice?, myContext: Context): Thread(){
-        var localSocket : BluetoothSocket? = null
-        var localDevice: BluetoothDevice? = null
-
-        //TODO there is a way in kotlin to assign member vars in the constructor param list I think
+    inner class ConnectThread(private var localDevice: BluetoothDevice?, myContext: Context): Thread(){
+        private var localSocket : BluetoothSocket? = null
         init {
-            localDevice = device
             var tmp : BluetoothSocket? = null
-
-            try{
-                //tmp = localDevice?.createRfcommSocketToServiceRecord(GameUUID)
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
                 if (ActivityCompat.checkSelfPermission(
                         myContext,
                         Manifest.permission.BLUETOOTH_CONNECT
                     ) != PackageManager.PERMISSION_GRANTED
                 ) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
+                    ActivityCompat.requestPermissions(myContext as Activity, arrayOf(Manifest.permission.BLUETOOTH_CONNECT), ANDROID_S_ABOVE_REQUEST_PERMISSION)
                 }
                 else {
                     tmp = localDevice?.createInsecureRfcommSocketToServiceRecord(GameUUID)
                 }
             }
-            catch(e: IOException){
-                //Log.e(Constants.TAG, "Error in ConnectThread.create()")
+            else{
+
             }
             localSocket = tmp
-            if ( localSocket == null )
-                Log.e( Constants.TAG, "NULL local socket!!!")
-            mState = STATE_CONNECTING
+            if ( localSocket == null ) {
+                Log.e(Constants.TAG, "NULL local socket!!!")
+            }
+            else {
+                mState = STATE_CONNECTING
+            }
         }
 
 
         override fun run(){
             name = "ConnectThread"
             try{
-                if (ActivityCompat.checkSelfPermission(
-                        myContext,
-                        Manifest.permission.BLUETOOTH_CONNECT
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
+                    if (ActivityCompat.checkSelfPermission(
+                            myContext,
+                            Manifest.permission.BLUETOOTH_CONNECT
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        ActivityCompat.requestPermissions(myContext as Activity, arrayOf(Manifest.permission.BLUETOOTH_CONNECT), ANDROID_S_ABOVE_REQUEST_PERMISSION)
+                    }
+                    else {
+                        localSocket?.connect()
+                    }
                 }
-                else {
+                else{
                     localSocket?.connect()
                 }
             }
@@ -222,9 +214,9 @@ class BluetoothGameClient(private val myContext: Context) {
     }
 
     inner class ConnectedThread(socket: BluetoothSocket? ): Thread(){
-        var localSocket: BluetoothSocket? = null
-        var localInStream: InputStream? = null
-        var localOutStream: OutputStream? = null
+        private var localSocket: BluetoothSocket? = null
+        private var localInStream: InputStream? = null
+        private var localOutStream: OutputStream? = null
 
         init{
             //Log.e(Constants.TAG, "Create ConnectedThread")
