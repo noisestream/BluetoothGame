@@ -1,37 +1,24 @@
+
+/**
+ * BluetoothGameClient corresponds to the Meatball Driver. The Meatball is the server that is connected to by this
+ * client.
+ */
 package com.ballofknives.bluetoothmeatball
 
-import android.Manifest
-import android.app.Activity
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothSocket
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.*
 import android.util.Log
-import androidx.core.app.ActivityCompat
-//import android.util.Log
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.lang.ref.WeakReference
 import java.util.*
 
-fun Context.bluetoothAdapter(): BluetoothAdapter? =
-    (this.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
-
-
-const val ANDROID_BELOW_S_REQUEST_PERMISSION = 0
-const val ANDROID_S_ABOVE_REQUEST_PERMISSION = 1
-
-/**
- * BluetoothGameClient corresponds to the Meatball Driver. The Meatball is the server that is connected to by this
- * client.
- *
- * @todo - would like the states to be an enum rather than ints.
- */
-class BluetoothGameClient(private val myContext: Context) {
+class BluetoothGameClient(var adapter: BluetoothAdapter? = null) {
     private val weakRef = WeakReference(this)
     private val handler = BTMsgHandler(weakRef)
 
@@ -43,13 +30,13 @@ class BluetoothGameClient(private val myContext: Context) {
         const val STATE_CONNECTING: Int = 2
         const val STATE_CONNECTED: Int = 3
     }
-    var adapter: BluetoothAdapter? = null
+
     var connectThread: ConnectThread? = null
     private var connectedThread: ConnectedThread? = null
+
     var mState: Int = STATE_NONE // if this is not private I get a 'platform declaration clash error'
 
     init {
-        adapter = myContext.bluetoothAdapter()
         mState = STATE_NONE
     }
 
@@ -81,7 +68,7 @@ class BluetoothGameClient(private val myContext: Context) {
             connectedThread = null
         }
 
-        connectThread = ConnectThread( device, myContext)
+        connectThread = ConnectThread( device )
         connectThread?.start()
     }
 
@@ -113,15 +100,12 @@ class BluetoothGameClient(private val myContext: Context) {
     }
 
     fun write( out : ByteArray ){
-        var r : ConnectedThread? // TODO = null here says is redundant
         synchronized(this){
             if( mState != STATE_CONNECTED ) {
                 return // TODO better error handling
             }
-            r = connectedThread
+            connectedThread?.write(out)
         }
-
-        r?.write(out) // TODO what if r is null? That would throw an uncaught exception!
     }
 
     private fun connectionFailed(){
@@ -132,58 +116,35 @@ class BluetoothGameClient(private val myContext: Context) {
 
     private fun connectionLost(){
         mState = STATE_NONE
-
-        // TODO not sure if this is okay
-        this.start() // BluetoothGameService.this.start()
+        this.start()
     }
 
-    inner class ConnectThread(private var localDevice: BluetoothDevice?, myContext: Context): Thread(){
+    @SuppressLint("MissingPermission")
+    inner class ConnectThread(private var localDevice: BluetoothDevice?): Thread(){
         private var localSocket : BluetoothSocket? = null
-        init {
-            var tmp : BluetoothSocket? = null
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
-                if (ActivityCompat.checkSelfPermission(
-                        myContext,
-                        Manifest.permission.BLUETOOTH_CONNECT
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) {
-                    ActivityCompat.requestPermissions(myContext as Activity, arrayOf(Manifest.permission.BLUETOOTH_CONNECT), ANDROID_S_ABOVE_REQUEST_PERMISSION)
-                }
-                else {
-                    tmp = localDevice?.createInsecureRfcommSocketToServiceRecord(GameUUID)
-                }
-            }
-            else{
 
-            }
-            localSocket = tmp
-            if ( localSocket == null ) {
-                Log.e(Constants.TAG, "NULL local socket!!!")
-            }
-            else {
-                mState = STATE_CONNECTING
+        init {
+            try {
+                localSocket = localDevice?.createRfcommSocketToServiceRecord(GameUUID)
+                if (localSocket == null) {
+                    Log.e(Constants.TAG, "NULL local socket!!!")
+                } else {
+                    mState = STATE_CONNECTING
+                }
+            } catch ( e: Exception) {
+                Log.e(TAG, "Error creating socket to service record")
+                if (e.message != null) {
+                    Log.e(TAG, e.message!!)
+                }
             }
         }
 
 
+        @SuppressLint("MissingPermission")
         override fun run(){
             name = "ConnectThread"
             try{
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
-                    if (ActivityCompat.checkSelfPermission(
-                            myContext,
-                            Manifest.permission.BLUETOOTH_CONNECT
-                        ) != PackageManager.PERMISSION_GRANTED
-                    ) {
-                        ActivityCompat.requestPermissions(myContext as Activity, arrayOf(Manifest.permission.BLUETOOTH_CONNECT), ANDROID_S_ABOVE_REQUEST_PERMISSION)
-                    }
-                    else {
-                        localSocket?.connect()
-                    }
-                }
-                else{
-                    localSocket?.connect()
-                }
+                localSocket?.connect()
             }
             catch(e: IOException){
                 try{
@@ -224,8 +185,8 @@ class BluetoothGameClient(private val myContext: Context) {
             var tmpIn: InputStream? = null
             var tmpOut: OutputStream? = null
             try{
-                tmpIn = socket?.getInputStream()
-                tmpOut = socket?.getOutputStream() // TODO dont use getters! Use property access instead?
+                tmpIn = socket?.inputStream
+                tmpOut = socket?.outputStream
             }
             catch( e: IOException ){
                 //Log.e(Constants.TAG, "Error getting socket streams")
@@ -237,10 +198,10 @@ class BluetoothGameClient(private val myContext: Context) {
         }
 
         override fun run(){
-            //Log.e(Constants.TAG, "beginning connectedthread")
+
             val VibrationMessageSize = 1
             val VibrationMessage : Byte = 0x01
-            val buffer = ByteArray(VibrationMessageSize) // TODO here I differ from the sample code. The buffer is 1024 there, but I want to avoid buffering issues.
+            val buffer = ByteArray(VibrationMessageSize)
             var bytes = 0
 
             while(mState == STATE_CONNECTED){
@@ -249,7 +210,8 @@ class BluetoothGameClient(private val myContext: Context) {
                     handler?.obtainMessage(GameGlobals.MESSAGE_READ, bytes, -1, buffer)?.sendToTarget()
                 }
                 catch( e: IOException){
-                    //Log.e(Constants.TAG, "disconnected!")
+                    if(e.message != null)
+                        Log.e(Constants.TAG, e.message!!)
                     connectionLost()
                     break;
                 }

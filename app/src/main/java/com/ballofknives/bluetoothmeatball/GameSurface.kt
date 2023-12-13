@@ -10,7 +10,7 @@ import android.view.WindowManager
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-class GameSurface(context: Context?) : SurfaceView(context), SurfaceHolder.Callback{
+class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callback{
     // ball coordinates
     var cx : Float = 0.toFloat()
     var cy : Float = 0.toFloat()
@@ -41,7 +41,7 @@ class GameSurface(context: Context?) : SurfaceView(context), SurfaceHolder.Callb
 
         //create a thread
         drawThread = DrawThread(holder, this)
-        btServer = BluetoothGameServer(this)
+        btServer = BluetoothGameServer(context.bluetoothAdapter(),this)
 
         // get references and sizes of the objects
         val display: Display = (getContext().getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay

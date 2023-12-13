@@ -15,6 +15,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
@@ -126,7 +127,7 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
     @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        service = BluetoothGameClient(this) // prob need a reference to this so that we can vibrate  the context. TODO
+        service = BluetoothGameClient(this.bluetoothAdapter()) // prob need a reference to this so that we can vibrate  the context. TODO
         setContentView(R.layout.activity_driver)
 
 
@@ -166,7 +167,7 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
                 xEvent = -1 * event.values[0]
                 yEvent = event.values[1]
                 zEvent = event.values[2]
-                //Log.i(Constants.TAG,xEvent.toString() + " " + yEvent.toString() )
+                Log.i(Constants.TAG,xEvent.toString() + " " + yEvent.toString() )
                 val shortX = java.lang.Float.floatToIntBits(xEvent)
                 val xBytes = ByteBuffer.allocate(java.lang.Float.BYTES).putInt(shortX)
                 val shortY = java.lang.Float.floatToIntBits(yEvent)
@@ -224,7 +225,6 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
      *  @reference: http://android-er.blogspot.com/2014/12/list-paired-bluetooth-devices-and-read.html
      */
 
-    @SuppressLint("MissingPermission")
     fun updatePairedDeviceList(){
         val pairedDevices: MutableSet<BluetoothDevice>? = service?.adapter?.bondedDevices
 

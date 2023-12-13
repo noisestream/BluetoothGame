@@ -1,10 +1,12 @@
 package com.ballofknives.bluetoothmeatball
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Bundle
@@ -26,14 +28,12 @@ import java.util.*
  * @todo - would like the states to be an enum rather than ints.
  * @todo maybe move the companion object stuff out to GameGlobals.kt
  */
-class BluetoothGameServer(gameSurface: GameSurface) {
+class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var gameSurface: GameSurface?) {
     private val NAME = "BluetoothGame"
 
     private val weakRef = WeakReference<BluetoothGameServer>(this)
 
     private val handler = BTMsgHandler(weakRef)
-
-    private var gameSurface: GameSurface? = null
 
     companion object {
         val GameUUID: UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
@@ -43,17 +43,14 @@ class BluetoothGameServer(gameSurface: GameSurface) {
         const val STATE_CONNECTED: Int = 3
     }
 
-    var adapter: BluetoothAdapter? = null
     var connectedThread: ConnectedThread? = null
     private var acceptThread: AcceptThread? = null
     private var mState: Int = STATE_NONE // if this is not private I get a 'platform declaration clash error'
     var newState: Int = STATE_NONE
 
     init {
-        adapter = BluetoothAdapter.getDefaultAdapter()
         mState = STATE_NONE
         newState = mState
-        this.gameSurface = gameSurface
     }
 
     @Synchronized
@@ -91,7 +88,8 @@ class BluetoothGameServer(gameSurface: GameSurface) {
     }
 
 
-    @Synchronized fun connected( socket: BluetoothSocket, device: BluetoothDevice){
+    @SuppressLint("MissingPermission")
+    @Synchronized fun connected(socket: BluetoothSocket, device: BluetoothDevice){
         if( connectedThread != null){
             connectedThread?.cancel()
             connectedThread = null
@@ -108,9 +106,9 @@ class BluetoothGameServer(gameSurface: GameSurface) {
         val msg = handler.obtainMessage( GameGlobals.MESSAGE_DEVICE_NAME )
         val bundle = Bundle()
 
-        bundle.putString(GameGlobals.DEVICE_NAME, device.getName())
-        msg?.setData(bundle)
-        handler?.sendMessage(msg)
+        bundle.putString(GameGlobals.DEVICE_NAME, device.name)
+        msg?.data = bundle
+        handler.sendMessage(msg)
         updateUserInterfaceTitle()
     }
 
@@ -145,7 +143,7 @@ class BluetoothGameServer(gameSurface: GameSurface) {
         val msg = handler.obtainMessage(GameGlobals.MESSAGE_TOAST)
         val bundle = Bundle()
         bundle.putString(GameGlobals.TOAST, "Device Connection Lost")
-        msg.setData(bundle)
+        msg.data = bundle
         handler.sendMessage(msg)
         mState = STATE_NONE
         updateUserInterfaceTitle()
@@ -156,6 +154,7 @@ class BluetoothGameServer(gameSurface: GameSurface) {
 
     //  NOTE needs to be marked "inner class" because it needs access to the parent class' members
     // TODO is this okay? The base class must be initialized here! Get rid of parens to see
+    @SuppressLint("MissingPermission")
     inner class AcceptThread : Thread() {
         private var serverSocket : BluetoothServerSocket? = null
 
@@ -165,7 +164,7 @@ class BluetoothGameServer(gameSurface: GameSurface) {
             var tmp: BluetoothServerSocket? = null
 
             try{
-                tmp = adapter!!.listenUsingInsecureRfcommWithServiceRecord(NAME, GameUUID)
+                tmp = adapter!!.listenUsingRfcommWithServiceRecord(NAME, GameUUID)
             }
             catch( e: IOException ){
                 //Log.e(Constants.TAG, "Socket listen() failed", e)
@@ -176,14 +175,15 @@ class BluetoothGameServer(gameSurface: GameSurface) {
             mState = STATE_LISTEN
         }
 
-        // TODO needs override keyword?
         override fun run(){
             //Log.e(Constants.TAG, "Starting run() in accept thread")
-            setName("Accept Thread")
+            name = "Accept Thread"
             var localSocket: BluetoothSocket? = null
             while ( mState != STATE_CONNECTED ){
                 try{
                     localSocket = serverSocket?.accept() // TODO check if socket is null?
+
+
                 }
                 catch( e: IOException){
                     //Log.e(Constants.TAG, "Socket accept() failed!", e)
@@ -191,11 +191,9 @@ class BluetoothGameServer(gameSurface: GameSurface) {
                 }
 
                 if ( localSocket != null){
-                    // TODO hmmmm does this refer to the outer class here?
-                    //synchronized(BluetoothGameService.this){
                     synchronized(this){
                         when(mState){
-                            STATE_LISTEN, STATE_CONNECTING -> connected( localSocket, localSocket.getRemoteDevice())
+                            STATE_LISTEN, STATE_CONNECTING -> connected( localSocket, localSocket.remoteDevice)
                             else ->try {
                             //STATE_NONE, STATE_CONNECTED -> try{
                                     localSocket.close()
@@ -257,7 +255,7 @@ class BluetoothGameServer(gameSurface: GameSurface) {
                     //bytes = localInStream?.read(buffer)
                     bytes = localInStream?.read(buffer)!! // TODO what is going on here with the !!
                     // TODO about the aforementioned !! ->  https://discuss.kotlinlang.org/t/automatic-coercion-from-nullable-to-non-null/543
-                    handler?.obtainMessage(GameGlobals.MESSAGE_READ, bytes, -1, buffer)?.sendToTarget()
+                    handler.obtainMessage(GameGlobals.MESSAGE_READ, bytes, -1, buffer)?.sendToTarget()
                 }
                 catch( e: IOException){
                     //Log.e(Constants.TAG, "disconnected!")
@@ -271,7 +269,7 @@ class BluetoothGameServer(gameSurface: GameSurface) {
             //Log.e(Constants.TAG, "Entering BluetoothGameService.ConnectedThread.write()")
             try{
                 localOutStream?.write(buffer)
-                handler?.obtainMessage(GameGlobals.MESSAGE_WRITE, -1, -1, buffer)?.sendToTarget()
+                handler.obtainMessage(GameGlobals.MESSAGE_WRITE, -1, -1, buffer)?.sendToTarget()
             }
             catch( e: IOException){
                 //Log.e(Constants.TAG, "Error during write() in conencted thread")
