@@ -6,3 +6,5 @@ import android.content.Context
 
 fun Context.bluetoothAdapter(): BluetoothAdapter? =
     (this.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
+
+fun ByteArray.toHex(): String = joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }

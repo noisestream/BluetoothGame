@@ -1,8 +1,11 @@
  package com.ballofknives.bluetoothmeatball
 
+import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
+import android.os.Build
 
 import android.os.Bundle
+import android.view.WindowInsets
 //import android.util.Log
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
@@ -13,24 +16,30 @@ import androidx.appcompat.app.AppCompatActivity
   */
  class MeatballActivity : AppCompatActivity() {
 
-    var gameSurface : GameSurface ?= null
+    private var gameSurface : GameSurface ?= null
 
+    @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         //Log.i(Constants.TAG, "onCreate() Meatball Activity");
 
         super.onCreate(savedInstanceState)
 
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_FULLSCREEN,
-            WindowManager.LayoutParams.FLAG_FULLSCREEN)
-
         gameSurface = GameSurface(this)
 
-        //setContentView(R.layout.activity_meatball)
         setContentView(gameSurface)
-     }
+
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.insetsController?.hide(WindowInsets.Type.statusBars())
+        } else {
+            window.setFlags(
+                WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN
+            )
+        }
+
+    }
 
      /*override fun onResume(){
          Log.i(Constants.TAG, "onResume() Meatball Activity!")

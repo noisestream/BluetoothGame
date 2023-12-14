@@ -15,6 +15,11 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
     var cx : Float = 0.toFloat()
     var cy : Float = 0.toFloat()
 
+    var prevX: ArrayDeque<Float> = ArrayDeque()
+    var prevY: ArrayDeque<Float> = ArrayDeque()
+
+    val MAX_CACHED_X_Y = 30
+
     // graphic size of the ball
     var picHeight: Int = 0
     var picWidth : Int = 0
@@ -34,6 +39,26 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
     //var vibratorService : Vibrator?= null
     var drawThread : DrawThread?= null
     var btServer: BluetoothGameServer? = null
+
+    private fun addXYVals(x: Float, y: Float){
+        prevX.addLast(x)
+        if(prevX.size > MAX_CACHED_X_Y){
+            prevX.removeFirst()
+        }
+        prevY.addLast(y)
+        if(prevY.size > MAX_CACHED_X_Y){
+            prevY.removeFirst()
+        }
+    }
+
+    private fun computeAverage(deque: ArrayDeque<Float>) : Float{
+        var total = 0.0f
+        deque.forEach{
+            total += it
+        }
+        return total / deque.size
+    }
+
 
     init {
         // This holder is a confusing thing. TODO
@@ -129,14 +154,17 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
      * often reporting a positive x Gravitation even when the axis is pointed down.
      * Could be an accelerometer (hardware) bug, could be android os, could be my code.
      */
-    fun updateMe(inx : Float , iny : Float){
+    @Synchronized fun updateMe(inx : Float , iny : Float){
         val oldCx = cx
         val oldCy = cy
-        var thresh = 0.5
-        cx += inx
-        cy += iny
-        if( diff(oldCx, oldCy, cx, cy) > thresh)
-            icon = icons!!.shuffled().take(1)[0] // TODO shuffle() or iterate through a list of pngs?
+        val thresh = 1
+        addXYVals(inx, iny)
+        val scale=5
+        val deltaX = scale*inx//computeAverage(prevX)
+        val deltaY = scale*iny//computeAverage(prevY)
+        cx += deltaX
+        cy += deltaY
+
         if(cx > gameWidth ){
             cx = gameWidth.toFloat()
             if (onBorderX){
@@ -173,6 +201,7 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
         else{
             onBorderY = true
         }
+        Log.i(TAG, "(gameWidth, gameHeight) : (" + "%7d".format(gameWidth) + "," + "%7d".format(gameHeight) + ") (dx,dy) : (" + "%5.2f".format(deltaX) + "," + "%5.2f".format(deltaY) + ") ( cx,cy ) : " + "(" + "%5.2f".format(cx) + "," + "%5.2f".format(cy) + ")")
 
         invalidate()
     }

@@ -11,6 +11,7 @@ import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Bundle
 import android.os.Message
+import android.util.Log
 import androidx.core.app.ActivityCompat
 
 //import android.util.Log
@@ -20,6 +21,7 @@ import java.io.OutputStream
 import java.lang.ref.WeakReference
 import java.nio.ByteBuffer
 import java.util.*
+import kotlin.math.abs
 
 
 /**
@@ -247,15 +249,20 @@ class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var ga
         override fun run(){
             //Log.e(Constants.TAG, "beginning connectedthread")
             // TODO make sure a float is 4 bytes in Kotlin.
-            var buffer = ByteArray(java.lang.Float.BYTES * 2) // TODO here I differ from the sample code. The buffer is 1024 there, but I want to avoid buffering issues.
+            var buffer = ByteArray(java.lang.Float.BYTES * 2)
             var bytes = 0
 
             while(mState == STATE_CONNECTED){
                 try{
-                    //bytes = localInStream?.read(buffer)
-                    bytes = localInStream?.read(buffer)!! // TODO what is going on here with the !!
-                    // TODO about the aforementioned !! ->  https://discuss.kotlinlang.org/t/automatic-coercion-from-nullable-to-non-null/543
-                    handler.obtainMessage(GameGlobals.MESSAGE_READ, bytes, -1, buffer)?.sendToTarget()
+                    bytes = localInStream?.read(buffer)!!
+                    Log.i(TAG, "read ${bytes} bytes from socket")
+                    val xCoord = ByteBuffer.wrap(buffer).getFloat(0);
+                    val yCoord = ByteBuffer.wrap(buffer).getFloat(4);
+                    Log.i(TAG, "Read (x,y) from socket: ($xCoord,$yCoord)")
+
+                        gameSurface!!.updateMe(xCoord, yCoord) // TODO !!. or ?.
+
+                    //handler.obtainMessage(GameGlobals.MESSAGE_READ, bytes, -1, buffer)?.sendToTarget()
                 }
                 catch( e: IOException){
                     //Log.e(Constants.TAG, "disconnected!")
@@ -288,19 +295,28 @@ class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var ga
 
     class BTMsgHandler(private val btGameServer: WeakReference<BluetoothGameServer>): Handler() {
         override fun handleMessage(msg: Message) {
-            // TODO what the hell is this@DriverActivity?? It was suggested to me by the IDE to eliminate the error.
             when( msg.what ){
-                //GameGlobals.MESSAGE_WRITE -> {
-                //    val data = msg.obj as ByteArray
-                //    val xCoord = ByteBuffer.wrap(data).getFloat(0);
-                //    val yCoord = ByteBuffer.wrap(data).getFloat(4);
-                //    btGameServer.get()?.gameSurface!!.updateMe(xCoord, yCoord) // TODO !!. or ?.
-                //}
                 GameGlobals.MESSAGE_READ -> {
+                    /*
                     val data = msg.obj as ByteArray
                     val xCoord = ByteBuffer.wrap(data).getFloat(0);
                     val yCoord = ByteBuffer.wrap(data).getFloat(4);
-                    btGameServer.get()?.gameSurface!!.updateMe(xCoord, yCoord) // TODO !!. or ?.
+                    Log.i(TAG, "Read (x,y) from socket: ($xCoord,$yCoord)")
+                    if((abs(yCoord) > 2) && (abs(xCoord) > 2)) {
+                        //Log.i(Constants.TAG, xCoord.toString() + " " + yCoord.toString())
+                        btGameServer.get()?.gameSurface!!.updateMe(xCoord, yCoord) // TODO !!. or ?.
+                    }
+                    else if(abs(yCoord) > 2)  {
+                        //Log.i(Constants.TAG, xCoord.toString() + " " + yCoord.toString())
+                        btGameServer.get()?.gameSurface!!.updateMe(0.0f, yCoord) // TODO !!. or ?.
+                    }
+                    else if(abs(xCoord) > 2) {
+                        //Log.i(Constants.TAG, xCoord.toString() + " " + yCoord.toString())
+                        btGameServer.get()?.gameSurface!!.updateMe(xCoord, 0.0f) // TODO !!. or ?.
+                    }
+
+
+                     */
                 }
                 else ->{
                     val pass: Unit = Unit

@@ -17,6 +17,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import android.view.View
+import android.view.WindowInsets
 import android.view.WindowManager
 import android.widget.Toast
 import android.widget.AdapterView
@@ -27,6 +28,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import java.nio.ByteBuffer
+import kotlin.math.abs
 
 /**
  * Connect to a meatball and send accelerometer data to it to control the motion.
@@ -38,7 +40,6 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
 
     private var xEvent : Float = 0.0f
     private var yEvent : Float = 0.0f
-    private var zEvent : Float = 0.0f
 
     private var service : BluetoothGameClient? = null
 
@@ -137,11 +138,17 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
 
         // setup the window
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_FULLSCREEN,
-            WindowManager.LayoutParams.FLAG_FULLSCREEN)
 
-        //requestBluetoothPermissions()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.insetsController?.hide(WindowInsets.Type.statusBars())
+        } else {
+            window.setFlags(
+                WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN
+            )
+        }
+
+        requestBluetoothPermission()
     }
 
 
@@ -158,22 +165,39 @@ class DriverActivity : AppCompatActivity(), SensorEventListener {
      */
     override fun onSensorChanged(event: SensorEvent?) {
         eventCount++
+        val cutoff = 2
         if ((event != null) && (eventCount == 1)){
             //Log.i(Constants.TAG, "Sensor changed!")
             eventCount=0
-            // When there is a sensor event, send out the data over bluetooth.
-            //ground!!.updateMe(event.values[1] , event.values[0])
-            synchronized(this){
-                xEvent = -1 * event.values[0]
-                yEvent = event.values[1]
-                zEvent = event.values[2]
-                Log.i(Constants.TAG,xEvent.toString() + " " + yEvent.toString() )
+            synchronized(this) {
+                xEvent = if (abs(event.values[0]) > cutoff){
+                            -1.0f * event.values[0]
+                            } else {
+                                0.0f
+                            }
+
+                yEvent = if(abs(event.values[1]) > cutoff){
+                    event.values[1]
+                } else{
+                    0.0f
+                }
                 val shortX = java.lang.Float.floatToIntBits(xEvent)
                 val xBytes = ByteBuffer.allocate(java.lang.Float.BYTES).putInt(shortX)
                 val shortY = java.lang.Float.floatToIntBits(yEvent)
                 val yBytes = ByteBuffer.allocate(java.lang.Float.BYTES).putInt(shortY)
-                service?.write( xBytes.array() )
-                service?.write( yBytes.array() )
+                val allBytes = ByteBuffer.allocate(2*java.lang.Float.BYTES).putInt(shortX).putInt(shortY)
+                if(abs(xEvent) > 0.5 || abs(yEvent) > cutoff) {
+//                    Log.i(
+  //                      TAG,
+    //                    "(dx,dy) : (" + "%5.2f".format(xEvent) + "," + "%5.2f".format(yEvent) + ")"
+      //              )
+                    synchronized(this) {
+                        Log.i(TAG, "sending bytes: %${allBytes.array().toHex()}")
+                        //service?.write(xBytes.array())
+                        //service?.write(yBytes.array())
+                        service?.write(allBytes.array())
+                    }
+                }
             }
         }
     }

@@ -221,11 +221,12 @@ class BluetoothGameClient(var adapter: BluetoothAdapter? = null) {
         fun write(buffer: ByteArray){
            ////Log.e(Constants.TAG, "Entering BluetoothGameService.ConnectedThread.write()")
             try{
+                Log.i(TAG, "sending bytes: ${buffer.toHex()}")
                 localOutStream?.write(buffer)
                 //handler?.obtainMessage(GameGlobals.MESSAGE_WRITE, -1, -1, buffer)?.sendToTarget()
             }
             catch( e: IOException){
-                //Log.e(Constants.TAG, "Error during write() in connected thread")
+                Log.e(Constants.TAG, "Error during write() in connected thread")
             }
         }
 
@@ -243,7 +244,7 @@ class BluetoothGameClient(var adapter: BluetoothAdapter? = null) {
         override fun handleMessage(msg: Message) {
             when( msg.what ){
                 GameGlobals.MESSAGE_WRITE-> {
-                    ////Log.i(Constants.TAG,"Write")
+                    Log.i(Constants.TAG,"Write")
                 }
                 else -> {
                     val pass: Unit = Unit
