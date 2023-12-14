@@ -20,7 +20,7 @@ import java.util.*
 
 class BluetoothGameClient(var adapter: BluetoothAdapter? = null) {
     private val weakRef = WeakReference(this)
-    private val handler = BTMsgHandler(weakRef)
+    private val handler = BTMsgHandler(Looper.myLooper()!!, null)
 
     companion object {
         val GameUUID: UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
@@ -207,7 +207,7 @@ class BluetoothGameClient(var adapter: BluetoothAdapter? = null) {
             while(mState == STATE_CONNECTED){
                 try{
                     bytes = localInStream?.read(buffer)!!
-                    handler?.obtainMessage(GameGlobals.MESSAGE_READ, bytes, -1, buffer)?.sendToTarget()
+                    handler?.obtainMessage(GameGlobals.MESSAGE_READ, -1, -1, buffer)?.sendToTarget()
                 }
                 catch( e: IOException){
                     if(e.message != null)
@@ -223,7 +223,7 @@ class BluetoothGameClient(var adapter: BluetoothAdapter? = null) {
             try{
                 Log.i(TAG, "sending bytes: ${buffer.toHex()}")
                 localOutStream?.write(buffer)
-                //handler?.obtainMessage(GameGlobals.MESSAGE_WRITE, -1, -1, buffer)?.sendToTarget()
+                handler?.obtainMessage(GameGlobals.MESSAGE_WRITE, -1, -1, buffer)?.sendToTarget()
             }
             catch( e: IOException){
                 Log.e(Constants.TAG, "Error during write() in connected thread")
@@ -240,16 +240,5 @@ class BluetoothGameClient(var adapter: BluetoothAdapter? = null) {
         }
     }
 
-    class BTMsgHandler(private val outerclass: WeakReference<BluetoothGameClient>): Handler() {
-        override fun handleMessage(msg: Message) {
-            when( msg.what ){
-                GameGlobals.MESSAGE_WRITE-> {
-                    Log.i(Constants.TAG,"Write")
-                }
-                else -> {
-                    val pass: Unit = Unit
-                }
-            }
-        }
-    }
+
 }

@@ -5,6 +5,7 @@ import android.content.pm.ActivityInfo
 import android.os.Build
 
 import android.os.Bundle
+import android.os.Looper
 import android.view.WindowInsets
 //import android.util.Log
 import android.view.WindowManager
@@ -15,17 +16,18 @@ import androidx.appcompat.app.AppCompatActivity
   * https://o7planning.org/en/10521/android-2d-game-tutorial-for-beginners
   */
  class MeatballActivity : AppCompatActivity() {
-
     private var gameSurface : GameSurface ?= null
+    private lateinit var handler: BTMsgHandler
+    private lateinit var btServer: BluetoothGameServer
 
     @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
-        //Log.i(Constants.TAG, "onCreate() Meatball Activity");
-
         super.onCreate(savedInstanceState)
 
         gameSurface = GameSurface(this)
-
+        handler = BTMsgHandler(Looper.myLooper()!!, gameSurface)
+        btServer = BluetoothGameServer(this.bluetoothAdapter(), handler)
+        btServer.start()
         setContentView(gameSurface)
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
@@ -41,20 +43,21 @@ import androidx.appcompat.app.AppCompatActivity
 
     }
 
-     /*override fun onResume(){
-         Log.i(Constants.TAG, "onResume() Meatball Activity!")
+     override fun onResume(){
          super.onResume()
          gameSurface?.destroySurface()
          gameSurface = null
          gameSurface = GameSurface(this)
          setContentView(gameSurface)
-     }*/
+         btServer?.start() // TODO not sure about lifecycle of server. Do I need to recreate it here? I think it might have been destroyed.
+     }
 
      override fun onPause() {
          //Log.i(Constants.TAG, "onPause")
          super.onPause()
          gameSurface?.destroySurface()
          gameSurface = null
+         btServer?.stop()
          finish()
      }
 
@@ -63,13 +66,14 @@ import androidx.appcompat.app.AppCompatActivity
          super.onDestroy()
          gameSurface?.destroySurface()
          gameSurface = null
+         btServer?.stop() // TODO not sure about the lifecycle of the bluetooth server. When is it destroyed?
          finish()
      }
 
 
+     @Deprecated("Deprecated in Java")
      override fun onBackPressed() {
          super.onBackPressed()
-         //Log.i(Constants.TAG, "Back button pressed!")
          try {
              gameSurface?.destroySurface()
              gameSurface = null

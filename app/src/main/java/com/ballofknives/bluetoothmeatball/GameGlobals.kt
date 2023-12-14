@@ -9,6 +9,9 @@ class GameGlobals {
         const val MESSAGE_TOAST = 5
 
         const val DEVICE_NAME = "device_name"
+        const val WRITE_DATA = "write_data"
+        const val READ_DATA = "read_data"
+        const val BLUETOOTH_DATA = "bt_data"
         const val TOAST = "toast"
     }
 

@@ -12,13 +12,8 @@ import kotlin.math.sqrt
 
 class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callback{
     // ball coordinates
-    var cx : Float = 0.toFloat()
+    private var cx : Float = 0.toFloat()
     var cy : Float = 0.toFloat()
-
-    var prevX: ArrayDeque<Float> = ArrayDeque()
-    var prevY: ArrayDeque<Float> = ArrayDeque()
-
-    val MAX_CACHED_X_Y = 30
 
     // graphic size of the ball
     var picHeight: Int = 0
@@ -28,36 +23,16 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
     private var icons: List<Bitmap>
 
     // window size
-    var Windowwidth : Int = 0
-    var Windowheight : Int = 0
-    var gameWidth: Int = 0
-    var gameHeight: Int = 0
+    private var Windowwidth : Int = 0
+    private var Windowheight : Int = 0
+    private var gameWidth: Int = 0
+    private var gameHeight: Int = 0
 
-    var onBorderX = false
-    var onBorderY = false
+    private var onBorderX = false
+    private var onBorderY = false
 
     //var vibratorService : Vibrator?= null
-    var drawThread : DrawThread?= null
-    var btServer: BluetoothGameServer? = null
-
-    private fun addXYVals(x: Float, y: Float){
-        prevX.addLast(x)
-        if(prevX.size > MAX_CACHED_X_Y){
-            prevX.removeFirst()
-        }
-        prevY.addLast(y)
-        if(prevY.size > MAX_CACHED_X_Y){
-            prevY.removeFirst()
-        }
-    }
-
-    private fun computeAverage(deque: ArrayDeque<Float>) : Float{
-        var total = 0.0f
-        deque.forEach{
-            total += it
-        }
-        return total / deque.size
-    }
+    private var drawThread : DrawThread?= null
 
 
     init {
@@ -66,7 +41,6 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
 
         //create a thread
         drawThread = DrawThread(holder, this)
-        btServer = BluetoothGameServer(context.bluetoothAdapter(),this)
 
         // get references and sizes of the objects
         val display: Display = (getContext().getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay
@@ -108,8 +82,6 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
                 e.printStackTrace()
             }
         }
-        btServer?.stop()
-        btServer = null
         Log.i(Constants.TAG, "surface destroyed!")
     }
 
@@ -118,34 +90,31 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
         Log.i(Constants.TAG,"surfaceCreated")
         drawThread!!.setRunning(true)
         drawThread!!.start()
-
-        btServer?.start()
     }
 
     override fun draw(canvas: Canvas) {
         super.draw(canvas)
+        Log.i("draw", "Called draw!")
         if (canvas != null){
-            //Log.i("draw", "Called draw!")
+            Log.i("draw", "non null canvas")
             canvas.drawColor(Color.WHITE)
             canvas.drawBitmap(icon,cx,cy,null)
             //canvas.drawBitmap(icons!!.shuffled().take(1)[0], cx, cy, null)
+        }
+        else{
+            Log.i("draw", "null canvas")
         }
     }
 
     override fun onDraw(canvas: Canvas) {
 
-        //Log.i("onDraw", "Called onDraw!")
+        Log.i("onDraw", "Called onDraw!")
         canvas.drawColor(Color.WHITE) // TODO why does setting the color to 0xFFAAAAAA just produce a black background? I tried some other hex colors too with the same result.
         canvas.drawBitmap(icon,cx,cy,null)
         //canvas.drawBitmap(icons!!.shuffled().take(1)[0], cx, cy, null)
     }
 
-    fun diff(x:Float, y: Float, x2:Float, y2:Float) : Float {
-        val two : Int = 2
-        val delX : Float = x - x2
-        val delY : Float = y - y2
-        return sqrt( delX.pow(two) + delY.pow( two ) )
-    }
+
 
     /**
      * @param inx - the acceleration felt in the x direction on the driver phone
@@ -155,10 +124,6 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
      * Could be an accelerometer (hardware) bug, could be android os, could be my code.
      */
     @Synchronized fun updateMe(inx : Float , iny : Float){
-        val oldCx = cx
-        val oldCy = cy
-        val thresh = 1
-        addXYVals(inx, iny)
         val scale=5
         val deltaX = scale*inx//computeAverage(prevX)
         val deltaY = scale*iny//computeAverage(prevY)

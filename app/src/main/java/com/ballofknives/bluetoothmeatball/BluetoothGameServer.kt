@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Bundle
+import android.os.Looper
 import android.os.Message
 import android.util.Log
 import androidx.core.app.ActivityCompat
@@ -30,15 +31,11 @@ import kotlin.math.abs
  * @todo - would like the states to be an enum rather than ints.
  * @todo maybe move the companion object stuff out to GameGlobals.kt
  */
-class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var gameSurface: GameSurface?) {
-    private val NAME = "BluetoothGame"
-
-    private val weakRef = WeakReference<BluetoothGameServer>(this)
-
-    private val handler = BTMsgHandler(weakRef)
+class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var handler: Handler) {
 
     companion object {
         val GameUUID: UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
+        const val BLUETOOTH_SERVICE_NAME = "Bluetooth Meatball"
         const val STATE_NONE: Int = 0
         const val STATE_LISTEN: Int = 1
         const val STATE_CONNECTING: Int = 2
@@ -53,13 +50,6 @@ class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var ga
     init {
         mState = STATE_NONE
         newState = mState
-    }
-
-    @Synchronized
-    fun updateUserInterfaceTitle() {
-        mState = getState()
-        newState = mState
-        handler?.obtainMessage(GameGlobals.MESSAGE_STATE_CHANGE, newState, -1)?.sendToTarget()
     }
 
     /**
@@ -86,7 +76,6 @@ class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var ga
                 //Log.e(Constants.TAG, "Accept thread no longer null")
             acceptThread?.start()
         }
-        updateUserInterfaceTitle()
     }
 
 
@@ -109,9 +98,8 @@ class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var ga
         val bundle = Bundle()
 
         bundle.putString(GameGlobals.DEVICE_NAME, device.name)
-        msg?.data = bundle
+        msg.data = bundle
         handler.sendMessage(msg)
-        updateUserInterfaceTitle()
     }
 
     @Synchronized fun stop(){
@@ -125,7 +113,6 @@ class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var ga
             acceptThread = null
         }
         mState = STATE_NONE
-        updateUserInterfaceTitle()
     }
 
     fun write( out : ByteArray ){
@@ -138,7 +125,12 @@ class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var ga
             r = connectedThread
         }
 
-        r?.write(out) // TODO what if r is null? That would throw an uncaught exception!
+        r?.write(out)
+        val msg = handler.obtainMessage( GameGlobals.MESSAGE_WRITE )
+        val bundle = Bundle()
+        bundle.putByteArray(GameGlobals.BLUETOOTH_DATA, out)
+        msg.data = bundle
+        handler.sendMessage(msg)
     }
 
     private fun connectionLost(){
@@ -148,7 +140,6 @@ class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var ga
         msg.data = bundle
         handler.sendMessage(msg)
         mState = STATE_NONE
-        updateUserInterfaceTitle()
 
         // TODO not sure if this is okay
         this.start()
@@ -159,14 +150,13 @@ class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var ga
     @SuppressLint("MissingPermission")
     inner class AcceptThread : Thread() {
         private var serverSocket : BluetoothServerSocket? = null
-
         // TODO what is the difference between a secure and an insecure socket?
         init{
             //Log.e(Constants.TAG, "Constructing acceptThread")
             var tmp: BluetoothServerSocket? = null
 
             try{
-                tmp = adapter!!.listenUsingRfcommWithServiceRecord(NAME, GameUUID)
+                tmp = adapter!!.listenUsingRfcommWithServiceRecord(BLUETOOTH_SERVICE_NAME, GameUUID)
             }
             catch( e: IOException ){
                 //Log.e(Constants.TAG, "Socket listen() failed", e)
@@ -184,8 +174,6 @@ class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var ga
             while ( mState != STATE_CONNECTED ){
                 try{
                     localSocket = serverSocket?.accept() // TODO check if socket is null?
-
-
                 }
                 catch( e: IOException){
                     //Log.e(Constants.TAG, "Socket accept() failed!", e)
@@ -244,11 +232,10 @@ class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var ga
             localInStream = tmpIn
             localOutStream = tmpOut
             mState = STATE_CONNECTED
+
         }
 
         override fun run(){
-            //Log.e(Constants.TAG, "beginning connectedthread")
-            // TODO make sure a float is 4 bytes in Kotlin.
             var buffer = ByteArray(java.lang.Float.BYTES * 2)
             var bytes = 0
 
@@ -259,10 +246,7 @@ class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var ga
                     val xCoord = ByteBuffer.wrap(buffer).getFloat(0);
                     val yCoord = ByteBuffer.wrap(buffer).getFloat(4);
                     Log.i(TAG, "Read (x,y) from socket: ($xCoord,$yCoord)")
-
-                        gameSurface!!.updateMe(xCoord, yCoord) // TODO !!. or ?.
-
-                    //handler.obtainMessage(GameGlobals.MESSAGE_READ, bytes, -1, buffer)?.sendToTarget()
+                    handler.obtainMessage(GameGlobals.MESSAGE_READ, -1, -1, buffer).sendToTarget()
                 }
                 catch( e: IOException){
                     //Log.e(Constants.TAG, "disconnected!")
@@ -293,35 +277,4 @@ class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var ga
         }
     }
 
-    class BTMsgHandler(private val btGameServer: WeakReference<BluetoothGameServer>): Handler() {
-        override fun handleMessage(msg: Message) {
-            when( msg.what ){
-                GameGlobals.MESSAGE_READ -> {
-                    /*
-                    val data = msg.obj as ByteArray
-                    val xCoord = ByteBuffer.wrap(data).getFloat(0);
-                    val yCoord = ByteBuffer.wrap(data).getFloat(4);
-                    Log.i(TAG, "Read (x,y) from socket: ($xCoord,$yCoord)")
-                    if((abs(yCoord) > 2) && (abs(xCoord) > 2)) {
-                        //Log.i(Constants.TAG, xCoord.toString() + " " + yCoord.toString())
-                        btGameServer.get()?.gameSurface!!.updateMe(xCoord, yCoord) // TODO !!. or ?.
-                    }
-                    else if(abs(yCoord) > 2)  {
-                        //Log.i(Constants.TAG, xCoord.toString() + " " + yCoord.toString())
-                        btGameServer.get()?.gameSurface!!.updateMe(0.0f, yCoord) // TODO !!. or ?.
-                    }
-                    else if(abs(xCoord) > 2) {
-                        //Log.i(Constants.TAG, xCoord.toString() + " " + yCoord.toString())
-                        btGameServer.get()?.gameSurface!!.updateMe(xCoord, 0.0f) // TODO !!. or ?.
-                    }
-
-
-                     */
-                }
-                else ->{
-                    val pass: Unit = Unit
-                }
-            }
-        }
-    }
 }
