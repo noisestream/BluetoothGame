@@ -31,7 +31,7 @@ import kotlin.math.abs
  * @todo - would like the states to be an enum rather than ints.
  * @todo maybe move the companion object stuff out to GameGlobals.kt
  */
-class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var handler: Handler) {
+class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var handler: Handler?) {
 
     companion object {
         val GameUUID: UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
@@ -50,13 +50,6 @@ class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var ha
     init {
         mState = STATE_NONE
         newState = mState
-    }
-
-    /**
-     * This method is stupid. No need for this I dont think, just make mState a public member.
-     */
-    @Synchronized fun getState() :Int {
-        return mState
     }
 
     @Synchronized fun start(){
@@ -94,12 +87,13 @@ class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var ha
         connectedThread = ConnectedThread( socket )
         connectedThread?.start()
 
-        val msg = handler.obtainMessage( GameGlobals.MESSAGE_DEVICE_NAME )
+        val msg = handler?.obtainMessage( GameGlobals.MESSAGE_DEVICE_NAME )
         val bundle = Bundle()
 
         bundle.putString(GameGlobals.DEVICE_NAME, device.name)
-        msg.data = bundle
-        handler.sendMessage(msg)
+        msg?.data = bundle
+        if(msg!=null)
+            handler?.sendMessage(msg)
     }
 
     @Synchronized fun stop(){
@@ -126,19 +120,20 @@ class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var ha
         }
 
         r?.write(out)
-        val msg = handler.obtainMessage( GameGlobals.MESSAGE_WRITE )
+        val msg = handler?.obtainMessage( GameGlobals.MESSAGE_WRITE )
         val bundle = Bundle()
         bundle.putByteArray(GameGlobals.BLUETOOTH_DATA, out)
-        msg.data = bundle
-        handler.sendMessage(msg)
+        msg?.data = bundle
+        if(msg != null)
+            handler?.sendMessage(msg)
     }
 
     private fun connectionLost(){
-        val msg = handler.obtainMessage(GameGlobals.MESSAGE_TOAST)
+        val msg = handler?.obtainMessage(GameGlobals.MESSAGE_TOAST)
         val bundle = Bundle()
-        bundle.putString(GameGlobals.TOAST, "Device Connection Lost")
-        msg.data = bundle
-        handler.sendMessage(msg)
+        //bundle.putString(GameGlobals.TOAST, "Device Connection Lost")
+        //msg.data = bundle
+        //handler.sendMessage(msg)
         mState = STATE_NONE
 
         // TODO not sure if this is okay
@@ -246,7 +241,7 @@ class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var ha
                     val xCoord = ByteBuffer.wrap(buffer).getFloat(0);
                     val yCoord = ByteBuffer.wrap(buffer).getFloat(4);
                     Log.i(TAG, "Read (x,y) from socket: ($xCoord,$yCoord)")
-                    handler.obtainMessage(GameGlobals.MESSAGE_READ, -1, -1, buffer).sendToTarget()
+                    handler?.obtainMessage(GameGlobals.MESSAGE_READ, -1, -1, buffer)?.sendToTarget()
                 }
                 catch( e: IOException){
                     //Log.e(Constants.TAG, "disconnected!")
@@ -260,7 +255,7 @@ class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var ha
             //Log.e(Constants.TAG, "Entering BluetoothGameService.ConnectedThread.write()")
             try{
                 localOutStream?.write(buffer)
-                handler.obtainMessage(GameGlobals.MESSAGE_WRITE, -1, -1, buffer)?.sendToTarget()
+                handler?.obtainMessage(GameGlobals.MESSAGE_WRITE, -1, -1, buffer)?.sendToTarget()
             }
             catch( e: IOException){
                 //Log.e(Constants.TAG, "Error during write() in conencted thread")

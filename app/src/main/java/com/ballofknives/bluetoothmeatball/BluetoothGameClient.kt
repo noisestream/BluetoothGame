@@ -19,7 +19,6 @@ import java.lang.ref.WeakReference
 import java.util.*
 
 class BluetoothGameClient(var adapter: BluetoothAdapter? = null) {
-    private val weakRef = WeakReference(this)
     private val handler = BTMsgHandler(Looper.myLooper()!!, null)
 
     companion object {

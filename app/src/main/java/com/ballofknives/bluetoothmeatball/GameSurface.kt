@@ -69,6 +69,7 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
 
     fun destroySurface()
     {
+        /*
         holder?.removeCallback(this)
         Log.i(Constants.TAG, "Starting surfaceDestroyed...")
         var retry = true
@@ -82,6 +83,8 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
                 e.printStackTrace()
             }
         }
+
+         */
         Log.i(Constants.TAG, "surface destroyed!")
     }
 
@@ -94,9 +97,9 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
 
     override fun draw(canvas: Canvas) {
         super.draw(canvas)
-        Log.i("draw", "Called draw!")
+        //Log.i("draw", "Called draw!")
         if (canvas != null){
-            Log.i("draw", "non null canvas")
+            //Log.i("draw", "non null canvas ${cx} ${cy}")
             canvas.drawColor(Color.WHITE)
             canvas.drawBitmap(icon,cx,cy,null)
             //canvas.drawBitmap(icons!!.shuffled().take(1)[0], cx, cy, null)
@@ -108,8 +111,8 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
 
     override fun onDraw(canvas: Canvas) {
 
-        Log.i("onDraw", "Called onDraw!")
-        canvas.drawColor(Color.WHITE) // TODO why does setting the color to 0xFFAAAAAA just produce a black background? I tried some other hex colors too with the same result.
+        //Log.i("onDraw", "Called onDraw!")
+        canvas.drawColor(Color.WHITE)
         canvas.drawBitmap(icon,cx,cy,null)
         //canvas.drawBitmap(icons!!.shuffled().take(1)[0], cx, cy, null)
     }
@@ -166,7 +169,8 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
         else{
             onBorderY = true
         }
-        Log.i(TAG, "(gameWidth, gameHeight) : (" + "%7d".format(gameWidth) + "," + "%7d".format(gameHeight) + ") (dx,dy) : (" + "%5.2f".format(deltaX) + "," + "%5.2f".format(deltaY) + ") ( cx,cy ) : " + "(" + "%5.2f".format(cx) + "," + "%5.2f".format(cy) + ")")
+        //Log.i(TAG, "(gameWidth, gameHeight) : (" + "%7d".format(gameWidth) + "," + "%7d".format(gameHeight) + ") (dx,dy) : (" + "%5.2f".format(deltaX) + "," + "%5.2f".format(deltaY) + ") ( cx,cy ) : " + "(" + "%5.2f".format(cx) + "," + "%5.2f".format(cy) + ")")
+        Log.i(TAG,"( cx,cy ) : " + "(" + "%5.2f".format(cx) + "," + "%5.2f".format(cy) + ")")
 
         invalidate()
     }
