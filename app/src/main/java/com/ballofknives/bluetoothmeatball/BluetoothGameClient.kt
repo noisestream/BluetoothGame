@@ -18,8 +18,7 @@ import java.io.OutputStream
 import java.lang.ref.WeakReference
 import java.util.*
 
-class BluetoothGameClient(var adapter: BluetoothAdapter? = null) {
-    private val handler = BTMsgHandler(Looper.myLooper()!!, null)
+class BluetoothGameClient(var adapter: BluetoothAdapter? = null,  private val handler : BTMsgHandler) {
 
     companion object {
         val GameUUID: UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
@@ -82,8 +81,11 @@ class BluetoothGameClient(var adapter: BluetoothAdapter? = null) {
             connectedThread = null
         }
 
+        handler?.obtainMessage(GameGlobals.CONNECTED, -1, -1, device)?.sendToTarget()
+
         connectedThread = ConnectedThread( socket )
         connectedThread?.start()
+
     }
 
     @Synchronized fun stop(){
@@ -220,7 +222,7 @@ class BluetoothGameClient(var adapter: BluetoothAdapter? = null) {
         fun write(buffer: ByteArray){
            ////Log.e(Constants.TAG, "Entering BluetoothGameService.ConnectedThread.write()")
             try{
-                Log.i(TAG, "sending bytes: ${buffer.toHex()}")
+                //Log.i(TAG, "sending bytes: ${buffer.toHex()}")
                 localOutStream?.write(buffer)
                 handler?.obtainMessage(GameGlobals.MESSAGE_WRITE, -1, -1, buffer)?.sendToTarget()
             }

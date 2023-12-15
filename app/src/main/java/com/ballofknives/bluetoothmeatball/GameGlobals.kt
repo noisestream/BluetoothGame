@@ -8,6 +8,8 @@ class GameGlobals {
         const val MESSAGE_DEVICE_NAME = 4
         const val MESSAGE_TOAST = 5
 
+        const val CONNECTED = 100
+
         const val DEVICE_NAME = "device_name"
         const val WRITE_DATA = "write_data"
         const val READ_DATA = "read_data"

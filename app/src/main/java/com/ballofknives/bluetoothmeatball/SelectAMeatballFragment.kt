@@ -13,6 +13,7 @@ import android.hardware.SensorManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
@@ -41,16 +42,17 @@ class SelectAMeatballFragment : Fragment() , SensorEventListener {
     private lateinit var listView: ListView
     private lateinit var letterId: String
 
-    private var mSensorManager : SensorManager?= null
-    private var mAccelerometer : Sensor?= null
+
     private var eventCount = 0
 
     private var xEvent : Float = 0.0f
     private var yEvent : Float = 0.0f
 
-    private var service : BluetoothGameClient? = null
+    var service : BluetoothGameClient? = null
 
-    private lateinit var persistentStorage : PersistentStorage
+    lateinit var persistentStorage : PersistentStorage
+    var mSensorManager : SensorManager?= null
+    var mAccelerometer : Sensor?= null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,7 +69,7 @@ class SelectAMeatballFragment : Fragment() , SensorEventListener {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        service = BluetoothGameClient(requireContext().bluetoothAdapter()) // prob need a reference to this so that we can vibrate  the context. TODO
+        service = BluetoothGameClient(requireContext().bluetoothAdapter(), BTMsgHandler(Looper.myLooper()!!, null, requireView()))
 
         mSensorManager = requireContext().getSystemService(Context.SENSOR_SERVICE) as SensorManager
         // focus in accelerometer
@@ -201,7 +203,7 @@ class SelectAMeatballFragment : Fragment() , SensorEventListener {
                     //                    "(dx,dy) : (" + "%5.2f".format(xEvent) + "," + "%5.2f".format(yEvent) + ")"
                     //              )
                     synchronized(this) {
-                        Log.i(TAG, "sending bytes: %${allBytes.array().toHex()}")
+                        //Log.i(TAG, "sending bytes: %${allBytes.array().toHex()}")
                         //service?.write(xBytes.array())
                         //service?.write(yBytes.array())
                         service?.write(allBytes.array())

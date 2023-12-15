@@ -42,7 +42,6 @@ class DriverActivity : AppCompatActivity(){
 
     private lateinit var navController: NavController
 
-
     @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -239,7 +238,7 @@ class DriverActivity : AppCompatActivity(){
     //                    "(dx,dy) : (" + "%5.2f".format(xEvent) + "," + "%5.2f".format(yEvent) + ")"
       //              )
                     synchronized(this) {
-                        Log.i(TAG, "sending bytes: %${allBytes.array().toHex()}")
+                        //Log.i(TAG, "sending bytes: %${allBytes.array().toHex()}")
                         //service?.write(xBytes.array())
                         //service?.write(yBytes.array())
                         service?.write(allBytes.array())

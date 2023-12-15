@@ -9,5 +9,18 @@
             android:id="@+id/selectAMeatballFragment"
             android:name="com.ballofknives.bluetoothmeatball.SelectAMeatballFragment"
             android:label="@string/fragment_select_a_meatball_label"
-            tools:layout="@layout/fragment_select_a_meatball" />
+            tools:layout="@layout/fragment_select_a_meatball" >
+        <action
+                android:id="@+id/action_selectAMeatballFragment_to_driverConnectedFragment"
+                app:destination="@id/driverConnectedFragment" />
+    </fragment>
+    <fragment
+            android:id="@+id/driverConnectedFragment"
+            android:name="com.ballofknives.bluetoothmeatball.DriverConnectedFragment"
+            android:label="DriverConnectedFragment"
+            tools:layout="@layout/fragment_driver_connected" >
+        <argument
+                android:name="meatball"
+                app:argType="string" />
+    </fragment>
 </navigation>

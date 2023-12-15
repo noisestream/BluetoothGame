@@ -13,4 +13,6 @@
     <string name="find_meatball_button">Find A Meatball</string>
     <string name="find_meatball_button_instructions">Click \'Find A Meatball\', scroll through the list, and choose a paired device. Make sure you can see the meatball on a white background on the remote device. Once connected, you will see that the meatball on the remote device starts to move. If the ball does not move, try connecting again.</string>
     <string name="fragment_select_a_meatball_label">Select a Meatball</string>
+    <string name="fragment_driver_connected_label">Driving!</string>
+    <string name="connected_to_meatball">You\'re connected to meatball {meatball}!</string>
 </resources>
