@@ -5,7 +5,6 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -16,71 +15,32 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
-import android.view.WindowInsets
-import android.view.WindowManager
-import android.widget.Toast
+import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.ListView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.navigation.NavController
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.setupActionBarWithNavController
+import androidx.fragment.app.Fragment
+import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat.getSystemService
+import androidx.core.content.getSystemService
+
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.ballofknives.bluetoothmeatball.databinding.FragmentSelectAMeatballBinding
 import java.nio.ByteBuffer
 import kotlin.math.abs
 
-import com.ballofknives.bluetoothmeatball.databinding.ActivityDriverBinding
+class SelectAMeatballFragment : Fragment() , SensorEventListener {
+    private var _binding : FragmentSelectAMeatballBinding? = null
+    private val binding get() = _binding!!
+    private lateinit var listView: ListView
+    private lateinit var letterId: String
 
-/**
- * Connect to a meatball and send accelerometer data to it to control the motion.
- */
-class DriverActivity : AppCompatActivity(){
-
-    private lateinit var navController: NavController
-
-
-    @SuppressLint("SourceLockedOrientationActivity")
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val binding = ActivityDriverBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        val navHostFragment = supportFragmentManager
-            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        navController = navHostFragment.navController
-
-
-
-        // setup the window
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            window.insetsController?.hide(WindowInsets.Type.statusBars())
-        } else {
-            window.setFlags(
-                WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN
-            )
-        }
-
-        setupActionBarWithNavController(navController)
-
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        return navController.navigateUp() || super.onSupportNavigateUp()
-    }
-
-
-}
-/*
-
-
-}, SensorEventListener {
     private var mSensorManager : SensorManager?= null
     private var mAccelerometer : Sensor?= null
     private var eventCount = 0
@@ -90,7 +50,43 @@ class DriverActivity : AppCompatActivity(){
 
     private var service : BluetoothGameClient? = null
 
-    private val persistentStorage = PersistentStorage(this)
+    private lateinit var persistentStorage : PersistentStorage
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        _binding = FragmentSelectAMeatballBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        service = BluetoothGameClient(requireContext().bluetoothAdapter()) // prob need a reference to this so that we can vibrate  the context. TODO
+
+        mSensorManager = requireContext().getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        // focus in accelerometer
+        mAccelerometer = mSensorManager!!.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+
+        persistentStorage = PersistentStorage(requireContext())
+
+        binding.btnGet.setOnClickListener{
+                v -> onUpdatePairedDeviceListClicked(v)
+        }
+
+        requestBluetoothPermission()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
 
     private val bluetoothPermissionRequest =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){ map ->
@@ -102,10 +98,10 @@ class DriverActivity : AppCompatActivity(){
 
     private fun isBluetoothPermissionGranted() : Boolean{
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT ) == PackageManager.PERMISSION_GRANTED
+            ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_CONNECT ) == PackageManager.PERMISSION_GRANTED
         } else{
-            ((ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_GRANTED ) &&
-                    (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ))
+            ((ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_GRANTED ) &&
+                    (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ))
         }
     }
 
@@ -140,7 +136,7 @@ class DriverActivity : AppCompatActivity(){
     }
 
     private fun showRationaleDialog(){
-        AlertDialog.Builder(this)
+        AlertDialog.Builder(requireContext())
             .setMessage(getString(R.string.bluetooth_rationale_1))
             .setPositiveButton(getString(android.R.string.ok)) { _, _ ->
                 persistentStorage.userHasAcknowledgedBluetoothPermissionRationale = true
@@ -150,7 +146,7 @@ class DriverActivity : AppCompatActivity(){
     }
 
     private fun showPreviouslyAcknowledgedRationaleDialog(){
-        AlertDialog.Builder(this)
+        AlertDialog.Builder(requireContext())
             .setMessage(getString(R.string.bluetooth_rationale_2))
             .setNegativeButton(getString(R.string.no_thanks), null)
             .setPositiveButton(getString(android.R.string.ok)) { _, _ -> showApplicationDetailsSettingsScreen() }
@@ -161,44 +157,10 @@ class DriverActivity : AppCompatActivity(){
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            .setData(Uri.fromParts("package", packageName, null))
+            .setData(Uri.fromParts("package", requireContext().packageName, null))
 
         startActivity(intent)
     }
-
-
-
-
-    /**
-     * @todo Enable the bit of code for checking if the bluetooth adapter is on!
-     */
-    @SuppressLint("SourceLockedOrientationActivity")
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        service = BluetoothGameClient(this.bluetoothAdapter()) // prob need a reference to this so that we can vibrate  the context. TODO
-        setContentView(R.layout.activity_driver)
-
-
-        mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        // focus in accelerometer
-        mAccelerometer = mSensorManager!!.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-
-        // setup the window
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            window.insetsController?.hide(WindowInsets.Type.statusBars())
-        } else {
-            window.setFlags(
-                WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN
-            )
-        }
-
-        requestBluetoothPermission()
-    }
-
-
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
     }
@@ -218,10 +180,10 @@ class DriverActivity : AppCompatActivity(){
             eventCount=0
             synchronized(this) {
                 xEvent = if (abs(event.values[0]) > cutoff){
-                            -1.0f * event.values[0]
-                            } else {
-                                0.0f
-                            }
+                    -1.0f * event.values[0]
+                } else {
+                    0.0f
+                }
 
                 yEvent = if(abs(event.values[1]) > cutoff){
                     event.values[1]
@@ -235,9 +197,9 @@ class DriverActivity : AppCompatActivity(){
                 val allBytes = ByteBuffer.allocate(2*java.lang.Float.BYTES).putInt(shortX).putInt(shortY)
                 if(abs(xEvent) > 0.5 || abs(yEvent) > cutoff) {
 //                    Log.i(
-  //                      TAG,
-    //                    "(dx,dy) : (" + "%5.2f".format(xEvent) + "," + "%5.2f".format(yEvent) + ")"
-      //              )
+                    //                      TAG,
+                    //                    "(dx,dy) : (" + "%5.2f".format(xEvent) + "," + "%5.2f".format(yEvent) + ")"
+                    //              )
                     synchronized(this) {
                         Log.i(TAG, "sending bytes: %${allBytes.array().toHex()}")
                         //service?.write(xBytes.array())
@@ -248,6 +210,43 @@ class DriverActivity : AppCompatActivity(){
             }
         }
     }
+
+
+    @SuppressLint("MissingPermission")
+    fun updatePairedDeviceList(){
+        val pairedDevices: MutableSet<BluetoothDevice>? = service?.adapter?.bondedDevices
+
+        val pairedDeviceList : MutableList<BluetoothDevice>? = pairedDevices?.toMutableList()
+        val pairedDeviceNames : MutableList<String>? = pairedDeviceList?.map{ device : BluetoothDevice -> device.name + "-" + device.address }?.toMutableList()
+        if (pairedDevices == null)
+            return
+        val arrayAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, pairedDeviceNames!! )
+        val listView = binding.deviceListView
+        listView.adapter = arrayAdapter
+        listView.onItemClickListener = AdapterView.OnItemClickListener { _, _, index, _ ->
+            val iter = pairedDevices.iterator()
+            //iter?.forEach {
+            //   Log.i(Constants.TAG, it.address)
+            //}
+
+            val toConnect = pairedDevices?.elementAt(index)
+
+            if( toConnect != null) {
+                //Log.i(Constants.TAG, "Trying to connect a device!")
+                try {
+                    //Log.i(Constants.TAG, "Connecting")
+                    Toast.makeText(requireContext(), "Trying to connect.", Toast.LENGTH_SHORT).show()
+                    service?.connect(toConnect)
+                    //TODO navigate to the connected screen.
+                }
+                catch(e: Exception){
+                    //Log.e(Constants.TAG, "Error during connect in DriverActivity")
+                }
+            }
+
+        }
+    }
+
 
     override fun onResume() {
         super.onResume()
@@ -264,10 +263,7 @@ class DriverActivity : AppCompatActivity(){
         service?.stop()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        //Log.i(Constants.TAG, "onDestroy()")
-    }
+
 
     fun onUpdatePairedDeviceListClicked(view: View){
         if(isBluetoothPermissionGranted()){
@@ -285,52 +281,12 @@ class DriverActivity : AppCompatActivity(){
             }
         }
     }
-
-    /**
-     * Update ListView
-     *
-     *  @todo Don't understand the <String!> type expected for the MutableList here.
-     *        Would like the warning to go away.
-     *        @todo Make sure bluetooth is on.
-     *  @reference: https://www.dev2qa.com/android-listview-example/
-     *  @reference: http://android-er.blogspot.com/2014/12/list-paired-bluetooth-devices-and-read.html
-     */
-
-    @SuppressLint("MissingPermission")
-    fun updatePairedDeviceList(){
-        val pairedDevices: MutableSet<BluetoothDevice>? = service?.adapter?.bondedDevices
-
-        val pairedDeviceList : MutableList<BluetoothDevice>? = pairedDevices?.toMutableList()
-        val pairedDeviceNames : MutableList<String>? = pairedDeviceList?.map{ device : BluetoothDevice -> device.name + "-" + device.address }?.toMutableList()
-        if (pairedDevices == null)
-            return
-        val arrayAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, pairedDeviceNames!! )
-        val listView = findViewById<ListView>(R.id.textView)
-        listView.adapter = arrayAdapter
-        listView.onItemClickListener = AdapterView.OnItemClickListener { _, _, index, _ ->
-            val iter = pairedDevices.iterator()
-            //iter?.forEach {
-             //   Log.i(Constants.TAG, it.address)
-            //}
-
-            val toConnect = pairedDevices?.elementAt(index)
-
-            if( toConnect != null) {
-                //Log.i(Constants.TAG, "Trying to connect a device!")
-                try {
-                    //Log.i(Constants.TAG, "Connecting")
-                    Toast.makeText(this@DriverActivity, "Trying to connect.", Toast.LENGTH_SHORT).show()
-                    service?.connect(toConnect)
-                    //TODO navigate to the connected screen.
-                }
-                catch(e: Exception){
-                    //Log.e(Constants.TAG, "Error during connect in DriverActivity")
-                }
-            }
-
-        }
-    }
-
-
 }
-*/
+
+
+
+
+
+
+
+

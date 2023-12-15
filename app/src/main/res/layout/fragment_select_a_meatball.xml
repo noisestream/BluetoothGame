@@ -1,0 +1,40 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        tools:context=".SelectAMeatballFragment">
+    <Button
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/btnGet"
+            android:text="@string/find_meatball_button"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:paddingRight="25dp"
+            android:paddingLeft="25dp"
+            android:background="@android:color/holo_red_dark"
+            android:fontFamily="monospace" android:textSize="14sp" android:textStyle="bold"
+            />
+    <ListView
+            android:id="@+id/deviceListView"
+            android:layout_width="300dp"
+            android:layout_height="150dp"
+            android:fadeScrollbars="false"
+            android:clickable="true">
+    </ListView>
+
+    <TextView
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:paddingVertical="10dp"
+            android:text="@string/find_meatball_button_instructions"
+            android:gravity="center_horizontal"
+            android:fontFamily="monospace"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:id="@+id/textView2"/>
+</LinearLayout>
