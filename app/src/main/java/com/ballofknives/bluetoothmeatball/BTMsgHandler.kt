@@ -14,6 +14,7 @@ import java.nio.ByteBuffer
 
 //class BTMsgHandler(looper: Looper, private var surface: WeakReference<GameSurface>?): Handler(looper) {
 class BTMsgHandler(looper: Looper, private var surface: GameSurface?, private val viewForNavigation: View? = null): Handler(looper) {
+
     @SuppressLint("MissingPermission")
     override fun handleMessage(msg: Message) {
         when( msg.what ){

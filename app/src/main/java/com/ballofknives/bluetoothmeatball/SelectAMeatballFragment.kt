@@ -29,6 +29,11 @@ import androidx.fragment.app.Fragment
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.getSystemService
+import androidx.core.os.bundleOf
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Observer
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -48,7 +53,7 @@ class SelectAMeatballFragment : Fragment() , SensorEventListener {
     private var xEvent : Float = 0.0f
     private var yEvent : Float = 0.0f
 
-    var service : BluetoothGameClient? = null
+    private val sharedViewModel: BluetoothSharedViewModel by activityViewModels()
 
     lateinit var persistentStorage : PersistentStorage
     var mSensorManager : SensorManager?= null
@@ -69,8 +74,6 @@ class SelectAMeatballFragment : Fragment() , SensorEventListener {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        service = BluetoothGameClient(requireContext().bluetoothAdapter(), BTMsgHandler(Looper.myLooper()!!, null, requireView()))
-
         mSensorManager = requireContext().getSystemService(Context.SENSOR_SERVICE) as SensorManager
         // focus in accelerometer
         mAccelerometer = mSensorManager!!.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
@@ -82,6 +85,15 @@ class SelectAMeatballFragment : Fragment() , SensorEventListener {
         }
 
         requestBluetoothPermission()
+
+        sharedViewModel.connected.observe(viewLifecycleOwner) {
+            if (it) {
+                val bundle = bundleOf(Pair( "meatball", "meatball") )
+                Log.e(TAG, "SAW CONNECTED VALUE CHANGE!")
+                this@SelectAMeatballFragment.findNavController()
+                    .navigate(R.id.action_selectAMeatballFragment_to_driverConnectedFragment, bundle)
+            }
+        }
     }
 
     override fun onDestroyView() {
@@ -206,7 +218,7 @@ class SelectAMeatballFragment : Fragment() , SensorEventListener {
                         //Log.i(TAG, "sending bytes: %${allBytes.array().toHex()}")
                         //service?.write(xBytes.array())
                         //service?.write(yBytes.array())
-                        service?.write(allBytes.array())
+                        sharedViewModel?.write(allBytes.array())
                     }
                 }
             }
@@ -216,29 +228,22 @@ class SelectAMeatballFragment : Fragment() , SensorEventListener {
 
     @SuppressLint("MissingPermission")
     fun updatePairedDeviceList(){
-        val pairedDevices: MutableSet<BluetoothDevice>? = service?.adapter?.bondedDevices
-
-        val pairedDeviceList : MutableList<BluetoothDevice>? = pairedDevices?.toMutableList()
-        val pairedDeviceNames : MutableList<String>? = pairedDeviceList?.map{ device : BluetoothDevice -> device.name + "-" + device.address }?.toMutableList()
-        if (pairedDevices == null)
-            return
-        val arrayAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, pairedDeviceNames!! )
+        //val pairedDeviceList : MutableList<BluetoothDevice>? = sharedViewModel.bondedDevices
+        //val pairedDeviceNames : MutableList<String>? = pairedDeviceList?.map{ device : BluetoothDevice -> device.name + "-" + device.address }?.toMutableList()
+        //if (pairedDevices == null)
+        //    return
+        val arrayAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, sharedViewModel._bondedDevices.value!! )
         val listView = binding.deviceListView
         listView.adapter = arrayAdapter
         listView.onItemClickListener = AdapterView.OnItemClickListener { _, _, index, _ ->
-            val iter = pairedDevices.iterator()
-            //iter?.forEach {
-            //   Log.i(Constants.TAG, it.address)
-            //}
-
-            val toConnect = pairedDevices?.elementAt(index)
+            val toConnect = sharedViewModel._bondedDevices.value?.elementAt(index)
 
             if( toConnect != null) {
                 //Log.i(Constants.TAG, "Trying to connect a device!")
                 try {
                     //Log.i(Constants.TAG, "Connecting")
                     Toast.makeText(requireContext(), "Trying to connect.", Toast.LENGTH_SHORT).show()
-                    service?.connect(toConnect)
+                    sharedViewModel?.connect(toConnect)
                     //TODO navigate to the connected screen.
                 }
                 catch(e: Exception){
@@ -254,15 +259,15 @@ class SelectAMeatballFragment : Fragment() , SensorEventListener {
         super.onResume()
         mSensorManager!!.registerListener(this,mAccelerometer,
             SensorManager.SENSOR_DELAY_GAME)
-        service?.start()
+        sharedViewModel?.start()
 
 
     }
 
     override fun onPause() {
         super.onPause()
-        mSensorManager!!.unregisterListener(this)
-        service?.stop()
+        //mSensorManager!!.unregisterListener(this)
+        //sharedViewModel?.stop()
     }
 
 
