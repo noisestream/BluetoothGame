@@ -1,4 +1,4 @@
-package com.ballofknives.bluetoothmeatball
+package com.noisestream.bluetoothgame
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager

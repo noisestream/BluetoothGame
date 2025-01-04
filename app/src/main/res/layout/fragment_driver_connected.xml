@@ -4,10 +4,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         xmlns:tools="http://schemas.android.com/tools"
-        tools:context=".SelectAMeatballFragment">
+        tools:context=".SelectAGameFragment">
 
     <TextView
-            android:text="@string/connected_to_meatball"
+            android:text="@string/connected_to_game"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/textView5"

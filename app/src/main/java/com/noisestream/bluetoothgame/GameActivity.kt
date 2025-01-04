@@ -1,4 +1,4 @@
- package com.ballofknives.bluetoothmeatball
+ package com.noisestream.bluetoothgame
 
 import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
@@ -16,7 +16,7 @@ import java.lang.ref.WeakReference
   * Reference used for this:
   * https://o7planning.org/en/10521/android-2d-game-tutorial-for-beginners
   */
- class MeatballActivity : AppCompatActivity() {
+ class GameActivity : AppCompatActivity() {
     private var gameSurface : GameSurface ?= null
     private var handler: BTMsgHandler? = null
     private var btServer: BluetoothGameServer? = null

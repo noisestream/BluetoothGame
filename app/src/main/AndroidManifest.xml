@@ -27,7 +27,7 @@
             android:theme="@style/AppTheme"
             android:enableOnBackInvokedCallback="true"
             tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".MeatballActivity">
+        <activity android:name=".GameActivity">
         </activity>
         <activity android:name=".DriverActivity">
         </activity>

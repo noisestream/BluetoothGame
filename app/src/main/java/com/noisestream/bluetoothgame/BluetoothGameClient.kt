@@ -1,40 +1,24 @@
-package com.ballofknives.bluetoothmeatball
+
+/**
+ * BluetoothGameClient corresponds to the Game Driver. The Game is the server that is connected to by this
+ * client.
+ */
+package com.noisestream.bluetoothgame
 
 import android.annotation.SuppressLint
-import android.app.Application
+import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothSocket
 import android.content.Context
+import android.os.*
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.util.UUID
-
-class BluetoothSharedViewModel(application: Application) : AndroidViewModel(application) {
-    private val adapter = (application.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
-
-    private val _connected = MutableLiveData<Boolean>(false)
-    val connected: LiveData<Boolean> = _connected
-
-    val _bondedDevices = MutableLiveData<List<BluetoothDevice>>()
-    val bondedDevices: LiveData<List<BluetoothDevice>> = _bondedDevices
-
-
-    var connectThread: ConnectThread? = null
-
-    private var connectedThread: ConnectedThread? = null
-
-    var mState: Int = STATE_NONE
-
-    private var localSocket: BluetoothSocket? = null
-    private var localInStream: InputStream? = null
-    private var localOutStream: OutputStream? = null
+import java.lang.ref.WeakReference
+import java.util.*
+/*
+class BluetoothGameClient(var adapter: BluetoothAdapter? = null,  private val handler : BTMsgHandler) {
 
     companion object {
         val GameUUID: UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
@@ -45,14 +29,13 @@ class BluetoothSharedViewModel(application: Application) : AndroidViewModel(appl
         const val STATE_CONNECTED: Int = 3
     }
 
+    var connectThread: ConnectThread? = null
+    private var connectedThread: ConnectedThread? = null
+
+    var mState: Int = STATE_NONE // if this is not private I get a 'platform declaration clash error'
+
     init {
         mState = STATE_NONE
-        refreshBondedDevices()
-    }
-
-    @SuppressLint("MissingPermission")
-    fun refreshBondedDevices(){
-        _bondedDevices.value = adapter.bondedDevices.toList()
     }
 
 
@@ -69,7 +52,8 @@ class BluetoothSharedViewModel(application: Application) : AndroidViewModel(appl
         }
     }
 
-    @Synchronized fun connect(device: BluetoothDevice){
+    @Synchronized fun connect(device: BluetoothDevice ){
+        //Log.i(Constants.TAG, "Attempting to connect BluetoothGameService to " + device.name )
         if( mState == STATE_CONNECTING){
             if( connectThread != null ){
                 connectThread?.cancel()
@@ -86,7 +70,7 @@ class BluetoothSharedViewModel(application: Application) : AndroidViewModel(appl
         connectThread?.start()
     }
 
-    @Synchronized fun connected(socket: BluetoothSocket?){
+    @Synchronized fun connected( socket: BluetoothSocket?, device: BluetoothDevice?){
         if( connectThread != null){
             connectThread?.cancel()
             connectThread = null
@@ -97,7 +81,7 @@ class BluetoothSharedViewModel(application: Application) : AndroidViewModel(appl
             connectedThread = null
         }
 
-        _connected.postValue(true)
+        handler?.obtainMessage(GameGlobals.CONNECTED, -1, -1, device)?.sendToTarget()
 
         connectedThread = ConnectedThread( socket )
         connectedThread?.start()
@@ -126,7 +110,7 @@ class BluetoothSharedViewModel(application: Application) : AndroidViewModel(appl
     }
 
     private fun connectionFailed(){
-        Log.i(Constants.TAG, "Connection Failed!")
+        //Log.i(Constants.TAG, "Connection Failed!")
         mState = STATE_NONE
         this.start()
     }
@@ -138,7 +122,7 @@ class BluetoothSharedViewModel(application: Application) : AndroidViewModel(appl
 
     @SuppressLint("MissingPermission")
     inner class ConnectThread(private var localDevice: BluetoothDevice?): Thread(){
-        //private var localSocket : BluetoothSocket? = null
+        private var localSocket : BluetoothSocket? = null
 
         init {
             try {
@@ -165,10 +149,12 @@ class BluetoothSharedViewModel(application: Application) : AndroidViewModel(appl
             }
             catch(e: IOException){
                 try{
-                    localSocket?.close()
+                    localSocket?.
+
+                    close()
                 }
                 catch( e2: IOException){
-                    Log.e(Constants.TAG, "Unable to close() socket. Error during connection")
+                    //Log.e(Constants.TAG, "Unable to close() socket. Error during connection")
                 }
                 connectionFailed()
                 return
@@ -177,7 +163,7 @@ class BluetoothSharedViewModel(application: Application) : AndroidViewModel(appl
             synchronized(this){
                 connectThread = null
             }
-            connected( localSocket)
+            connected( localSocket, localDevice)
         }
 
 
@@ -186,16 +172,16 @@ class BluetoothSharedViewModel(application: Application) : AndroidViewModel(appl
                 localSocket?.close()
             }
             catch( e: IOException){
-                Log.e(Constants.TAG, "Unable to close() socket in cancel()")
+                //Log.e(Constants.TAG, "Unable to close() socket in cancel()")
             }
         }
     }
 
     inner class ConnectedThread(socket: BluetoothSocket? ): Thread(){
+        private var localSocket: BluetoothSocket? = null
+        private var localInStream: InputStream? = null
+        private var localOutStream: OutputStream? = null
 
-        //private var localSocket: BluetoothSocket? = null
-        //private var localInStream: InputStream? = null
-        //private var localOutStream: OutputStream? = null
         init{
             //Log.e(Constants.TAG, "Create ConnectedThread")
             localSocket = socket
@@ -205,8 +191,8 @@ class BluetoothSharedViewModel(application: Application) : AndroidViewModel(appl
                 tmpIn = socket?.inputStream
                 tmpOut = socket?.outputStream
             }
-            catch( e: IOException){
-                Log.e(Constants.TAG, "Error getting socket streams")
+            catch( e: IOException ){
+                //Log.e(Constants.TAG, "Error getting socket streams")
             }
 
             localInStream = tmpIn
@@ -224,13 +210,11 @@ class BluetoothSharedViewModel(application: Application) : AndroidViewModel(appl
             while(mState == STATE_CONNECTED){
                 try{
                     bytes = localInStream?.read(buffer)!!
+                    handler?.obtainMessage(GameGlobals.MESSAGE_READ, -1, -1, buffer)?.sendToTarget()
                 }
                 catch( e: IOException){
-                    if(e.message != null) {
-                        Log.e(TAG, "before run error")
+                    if(e.message != null)
                         Log.e(Constants.TAG, e.message!!)
-                        Log.e(TAG, "after run error")
-                    }
                     connectionLost()
                     break;
                 }
@@ -238,9 +222,11 @@ class BluetoothSharedViewModel(application: Application) : AndroidViewModel(appl
         }
 
         fun write(buffer: ByteArray){
+           ////Log.e(Constants.TAG, "Entering BluetoothGameService.ConnectedThread.write()")
             try{
                 //Log.i(TAG, "sending bytes: ${buffer.toHex()}")
                 localOutStream?.write(buffer)
+                handler?.obtainMessage(GameGlobals.MESSAGE_WRITE, -1, -1, buffer)?.sendToTarget()
             }
             catch( e: IOException){
                 Log.e(Constants.TAG, "Error during write() in connected thread")
@@ -252,8 +238,12 @@ class BluetoothSharedViewModel(application: Application) : AndroidViewModel(appl
                 localSocket?.close()
             }
             catch( e: IOException){
-                Log.e(Constants.TAG, "close() of connection socket failed!")
+                //Log.e(Constants.TAG, "close() of connection socket failed!")
             }
         }
     }
+
+
 }
+
+ */

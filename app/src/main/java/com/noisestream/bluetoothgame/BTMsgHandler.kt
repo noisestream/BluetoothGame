@@ -1,4 +1,4 @@
-package com.ballofknives.bluetoothmeatball
+package com.noisestream.bluetoothgame
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
@@ -20,7 +20,7 @@ class BTMsgHandler(looper: Looper, private var surface: GameSurface?, private va
         when( msg.what ){
             GameGlobals.CONNECTED ->{
                 val device: BluetoothDevice = msg.obj as BluetoothDevice
-                val action = SelectAMeatballFragmentDirections.actionSelectAMeatballFragmentToDriverConnectedFragment( device.name )
+                val action = SelectAGameFragmentDirections.actionSelectAGameFragmentToDriverConnectedFragment( device.name )
                 viewForNavigation?.findNavController()?.navigate(action)
             }
             GameGlobals.MESSAGE_WRITE-> {

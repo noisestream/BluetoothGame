@@ -1,4 +1,4 @@
-package com.ballofknives.bluetoothmeatball
+package com.noisestream.bluetoothgame
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -35,7 +35,7 @@ class BluetoothGameServer(private var adapter: BluetoothAdapter?, private var ha
 
     companion object {
         val GameUUID: UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
-        const val BLUETOOTH_SERVICE_NAME = "Bluetooth Meatball"
+        const val BLUETOOTH_SERVICE_NAME = "Bluetooth Game"
         const val STATE_NONE: Int = 0
         const val STATE_LISTEN: Int = 1
         const val STATE_CONNECTING: Int = 2

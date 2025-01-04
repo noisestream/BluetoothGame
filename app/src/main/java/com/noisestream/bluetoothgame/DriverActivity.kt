@@ -1,4 +1,4 @@
-package com.ballofknives.bluetoothmeatball
+package com.noisestream.bluetoothgame
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -33,10 +33,10 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import java.nio.ByteBuffer
 import kotlin.math.abs
 
-import com.ballofknives.bluetoothmeatball.databinding.ActivityDriverBinding
+import com.noisestream.bluetoothgame.databinding.ActivityDriverBinding
 
 /**
- * Connect to a meatball and send accelerometer data to it to control the motion.
+ * Connect to a game and send accelerometer data to it to control the motion.
  */
 class DriverActivity : AppCompatActivity(){
 

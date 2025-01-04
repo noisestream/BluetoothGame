@@ -3,24 +3,24 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/driver_nav_graph"
-        app:startDestination="@id/selectAMeatballFragment">
+        app:startDestination="@id/selectAGameFragment">
 
     <fragment
-            android:id="@+id/selectAMeatballFragment"
-            android:name="com.ballofknives.bluetoothmeatball.SelectAMeatballFragment"
-            android:label="@string/fragment_select_a_meatball_label"
-            tools:layout="@layout/fragment_select_a_meatball" >
+            android:id="@+id/selectAGameFragment"
+            android:name="com.noisestream.bluetoothgame.SelectAGameFragment"
+            android:label="@string/fragment_select_a_game_label"
+            tools:layout="@layout/fragment_select_a_game" >
         <action
-                android:id="@+id/action_selectAMeatballFragment_to_driverConnectedFragment"
+                android:id="@+id/action_selectAGameFragment_to_driverConnectedFragment"
                 app:destination="@id/driverConnectedFragment" />
     </fragment>
     <fragment
             android:id="@+id/driverConnectedFragment"
-            android:name="com.ballofknives.bluetoothmeatball.DriverConnectedFragment"
+            android:name="com.noisestream.bluetoothgame.DriverConnectedFragment"
             android:label="DriverConnectedFragment"
             tools:layout="@layout/fragment_driver_connected" >
         <argument
-                android:name="meatball"
+                android:name="game"
                 app:argType="string" />
     </fragment>
 </navigation>

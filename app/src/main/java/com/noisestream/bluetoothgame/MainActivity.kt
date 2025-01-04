@@ -1,4 +1,4 @@
-package com.ballofknives.bluetoothmeatball
+package com.noisestream.bluetoothgame
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -17,7 +17,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 
-const val TAG = "BluetoothMeatball"
+const val TAG = "BluetoothGame"
 
 class MainActivity : AppCompatActivity() {
 
@@ -143,11 +143,11 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    fun chooseMeatball(view: View) {
+    fun chooseGame(view: View) {
         if(isBluetoothPermissionGranted()){
-            val meatballIntent = Intent( this, MeatballActivity::class.java)
-            meatballIntent.flags = Intent.FLAG_ACTIVITY_NO_HISTORY
-            startActivity( meatballIntent )
+            val gameIntent = Intent( this, GameActivity::class.java)
+            gameIntent.flags = Intent.FLAG_ACTIVITY_NO_HISTORY
+            startActivity( gameIntent )
         }
         else{
             if(shouldShowBluetoothPermissionRationale()){

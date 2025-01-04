@@ -2,7 +2,7 @@
  * Class taken from adil-hussain-84 on github.
  * https://github.com/adil-hussain-84/android-runtime-permission-experiments/blob/master/app2/src/main/java/com/tazkiyatech/app/PersistentStorage.kt
  */
-package com.ballofknives.bluetoothmeatball
+package com.noisestream.bluetoothgame
 
 import android.content.Context
 import android.content.SharedPreferences

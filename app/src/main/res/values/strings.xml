@@ -1,18 +1,18 @@
 <resources>
-    <string name="app_name">BluetoothMeatball</string>
+    <string name="app_name">BluetoothGame</string>
     <string name="homescreen_preamble">This application is a proof of concept. You can use your phone\'s accelerometer and bluetooth adapter to create a moving ball animation on a remote device. Make sure you have paired the devices before proceeding.</string>
-    <string name="choose_instruction">One device must be the meatball, while the other drives the meatball
+    <string name="choose_instruction">One device must be the game, while the other drives the game
         .:</string>
     <string name="bluetooth_rationale_1">Granted the requested permissions allows the app to use the bluetooth functionality of your device.</string>
     <string name="bluetooth_rationale_2">Please enable the requested permissions in Settings to allow the app to use bluetooth on your device.</string>
     <string name="no_thanks">No thanks.</string>
     <string name="driver_button_text">Give Me The Wheel</string>
-    <string name="meatball_button_text">Going For A Ride</string>
-    <string name="logo_description">BluetoothMeatballLogo</string>
-    <string name="game_title">Bluetooth Meatball!</string>
-    <string name="find_meatball_button">Find A Meatball</string>
-    <string name="find_meatball_button_instructions">Click \'Find A Meatball\', scroll through the list, and choose a paired device. Make sure you can see the meatball on a white background on the remote device. Once connected, you will see that the meatball on the remote device starts to move. If the ball does not move, try connecting again.</string>
-    <string name="fragment_select_a_meatball_label">Select a Meatball</string>
+    <string name="game_button_text">Going For A Ride</string>
+    <string name="logo_description">BluetoothGameLogo</string>
+    <string name="game_title">Bluetooth Game!</string>
+    <string name="find_game_button">Find A Game</string>
+    <string name="find_game_button_instructions">Click \'Find A Game\', scroll through the list, and choose a paired device. Make sure you can see the game on a white background on the remote device. Once connected, you will see that the game on the remote device starts to move. If the ball does not move, try connecting again.</string>
+    <string name="fragment_select_a_game_label">Select a Game</string>
     <string name="fragment_driver_connected_label">Driving!</string>
-    <string name="connected_to_meatball">You\'re connected to meatball {meatball}!</string>
+    <string name="connected_to_game">You\'re connected to game {game}!</string>
 </resources>

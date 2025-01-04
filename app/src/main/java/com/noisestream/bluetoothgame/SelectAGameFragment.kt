@@ -1,4 +1,4 @@
-package com.ballofknives.bluetoothmeatball
+package com.noisestream.bluetoothgame
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -37,12 +37,12 @@ import androidx.navigation.fragment.findNavController
 
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.ballofknives.bluetoothmeatball.databinding.FragmentSelectAMeatballBinding
+import com.noisestream.bluetoothgame.databinding.FragmentSelectAGameBinding
 import java.nio.ByteBuffer
 import kotlin.math.abs
 
-class SelectAMeatballFragment : Fragment() , SensorEventListener {
-    private var _binding : FragmentSelectAMeatballBinding? = null
+class SelectAGameFragment : Fragment() , SensorEventListener {
+    private var _binding : FragmentSelectAGameBinding? = null
     private val binding get() = _binding!!
     private lateinit var listView: ListView
     private lateinit var letterId: String
@@ -69,7 +69,7 @@ class SelectAMeatballFragment : Fragment() , SensorEventListener {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        _binding = FragmentSelectAMeatballBinding.inflate(inflater, container, false)
+        _binding = FragmentSelectAGameBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -88,10 +88,10 @@ class SelectAMeatballFragment : Fragment() , SensorEventListener {
 
         sharedViewModel.connected.observe(viewLifecycleOwner) {
             if (it) {
-                val bundle = bundleOf(Pair( "meatball", "meatball") )
+                val bundle = bundleOf(Pair( "game", "game") )
                 Log.e(TAG, "SAW CONNECTED VALUE CHANGE!")
-                this@SelectAMeatballFragment.findNavController()
-                    .navigate(R.id.action_selectAMeatballFragment_to_driverConnectedFragment, bundle)
+                this@SelectAGameFragment.findNavController()
+                    .navigate(R.id.action_selectAGameFragment_to_driverConnectedFragment, bundle)
             }
         }
     }
